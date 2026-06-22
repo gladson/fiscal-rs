@@ -371,7 +371,11 @@ fn build_inf_antt(antt: &InfAntt) -> String {
             vc.push(tag("vValePed", &[], TagContent::Text(v)));
         }
         vc.push(tag("tpValePed", &[], TagContent::Text(&vp.tp_vale_ped)));
-        vc.push(tag("categCombVeic", &[], TagContent::Text(&vp.categ_comb_veic)));
+        vc.push(tag(
+            "categCombVeic",
+            &[],
+            TagContent::Text(&vp.categ_comb_veic),
+        ));
         tag("valePed", &[], TagContent::Children(vc))
     }));
     tag("infANTT", &[], TagContent::Children(children))

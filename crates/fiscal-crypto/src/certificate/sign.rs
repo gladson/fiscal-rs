@@ -399,8 +399,7 @@ pub fn sign_sp_lote_xml(
         1,
     );
 
-    let signature_value =
-        rsa_sha1_base64(canonical_signed_info.as_bytes(), private_key_pem)?;
+    let signature_value = rsa_sha1_base64(canonical_signed_info.as_bytes(), private_key_pem)?;
 
     let cert_base64 = extract_cert_base64(certificate_pem);
     let signature_xml = build_signature_element(&signed_info, &signature_value, &cert_base64);

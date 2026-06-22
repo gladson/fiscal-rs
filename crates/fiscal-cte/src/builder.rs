@@ -443,9 +443,15 @@ fn build_inf_cte_norm(n: &InfCteNorm) -> String {
     }
     for s in &n.seg {
         let mut sc = vec![tag("respSeg", &[], TagContent::Text(&s.resp_seg))];
-        if let Some(v) = &s.x_seg { sc.push(tag("xSeg", &[], TagContent::Text(v))); }
-        if let Some(v) = &s.cnpj_seg { sc.push(tag("CNPJ", &[], TagContent::Text(v))); }
-        if let Some(v) = &s.n_apol { sc.push(tag("nApol", &[], TagContent::Text(v))); }
+        if let Some(v) = &s.x_seg {
+            sc.push(tag("xSeg", &[], TagContent::Text(v)));
+        }
+        if let Some(v) = &s.cnpj_seg {
+            sc.push(tag("CNPJ", &[], TagContent::Text(v)));
+        }
+        if let Some(v) = &s.n_apol {
+            sc.push(tag("nApol", &[], TagContent::Text(v)));
+        }
         c.push(tag("seg", &[], TagContent::Children(sc)));
     }
     tag("infCTeNorm", &[], TagContent::Children(c))
@@ -521,7 +527,11 @@ fn build_rodo_cte(r: &RodoCte) -> String {
                 &[],
                 TagContent::Children(vec![
                     tag("CIOT", &[], TagContent::Text(&c.ciot)),
-                    tag(if c.tax_id.len() == 14 { "CNPJ" } else { "CPF" }, &[], TagContent::Text(&c.tax_id)),
+                    tag(
+                        if c.tax_id.len() == 14 { "CNPJ" } else { "CPF" },
+                        &[],
+                        TagContent::Text(&c.tax_id),
+                    ),
                 ]),
             ));
         }
