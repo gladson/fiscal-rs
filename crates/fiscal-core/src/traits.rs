@@ -23,7 +23,7 @@ pub trait TaxCalculation: Sealed {
 
 impl Sealed for IcmsVariant {}
 impl TaxCalculation for IcmsVariant {
-    /// Build the ICMS XML string, delegating to [`build_icms_xml`].
+    /// Build the ICMS XML string, delegating to `build_icms_xml`.
     ///
     /// A throwaway [`crate::tax_icms::IcmsTotals`] accumulator is used since
     /// the trait cannot surface totals side-effects. Returns an empty string
@@ -36,7 +36,7 @@ impl TaxCalculation for IcmsVariant {
 
 impl Sealed for PisData {}
 impl TaxCalculation for PisData {
-    /// Build the PIS XML string, delegating to [`build_pis_xml`].
+    /// Build the PIS XML string, delegating to `build_pis_xml`.
     fn build_xml(&self) -> String {
         build_pis_xml(self)
     }
@@ -44,7 +44,7 @@ impl TaxCalculation for PisData {
 
 impl Sealed for CofinsData {}
 impl TaxCalculation for CofinsData {
-    /// Build the COFINS XML string, delegating to [`build_cofins_xml`].
+    /// Build the COFINS XML string, delegating to `build_cofins_xml`.
     fn build_xml(&self) -> String {
         build_cofins_xml(self)
     }
@@ -52,7 +52,7 @@ impl TaxCalculation for CofinsData {
 
 impl Sealed for IpiData {}
 impl TaxCalculation for IpiData {
-    /// Build the IPI XML string, delegating to [`build_ipi_xml`].
+    /// Build the IPI XML string, delegating to `build_ipi_xml`.
     fn build_xml(&self) -> String {
         build_ipi_xml(self)
     }
@@ -60,7 +60,7 @@ impl TaxCalculation for IpiData {
 
 impl Sealed for IiData {}
 impl TaxCalculation for IiData {
-    /// Build the II (import tax) XML string, delegating to [`build_ii_xml`].
+    /// Build the II (import tax) XML string, delegating to `build_ii_xml`.
     fn build_xml(&self) -> String {
         build_ii_xml(self)
     }
@@ -68,7 +68,7 @@ impl TaxCalculation for IiData {
 
 impl Sealed for IssqnData {}
 impl TaxCalculation for IssqnData {
-    /// Build the ISSQN XML string, delegating to [`build_issqn_xml`].
+    /// Build the ISSQN XML string, delegating to `build_issqn_xml`.
     fn build_xml(&self) -> String {
         build_issqn_xml(self)
     }
@@ -76,7 +76,7 @@ impl TaxCalculation for IssqnData {
 
 impl Sealed for IsData {}
 impl TaxCalculation for IsData {
-    /// Build the IS (IBS/CBS) XML string, delegating to [`build_is_xml`].
+    /// Build the IS (IBS/CBS) XML string, delegating to `build_is_xml`.
     fn build_xml(&self) -> String {
         build_is_xml(self)
     }
@@ -94,7 +94,7 @@ pub trait XmlSerializable: Sealed {
 
 impl Sealed for TaxElement {}
 impl XmlSerializable for TaxElement {
-    /// Serialize the element to XML, delegating to [`serialize_tax_element`].
+    /// Serialize the element to XML, delegating to `serialize_tax_element`.
     fn to_xml(&self) -> String {
         serialize_tax_element(self)
     }

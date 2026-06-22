@@ -32,7 +32,7 @@ impl SefazClient {
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[allow(clippy::too_many_arguments)]
     pub async fn ator_interessado(
         &self,
@@ -59,8 +59,9 @@ impl SefazClient {
             environment,
             tax_id,
         );
+        let signed_xml = self.sign_event(&request_xml)?;
         let raw = self
-            .send_an(SefazService::RecepcaoEvento, environment, &request_xml)
+            .send_an(SefazService::RecepcaoEvento, environment, &signed_xml)
             .await?;
         response_parsers::parse_cancellation_response(&raw)
     }
@@ -73,7 +74,7 @@ impl SefazClient {
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[allow(clippy::too_many_arguments)]
     pub async fn comprovante_entrega(
         &self,
@@ -106,8 +107,9 @@ impl SefazClient {
             environment,
             tax_id,
         );
+        let signed_xml = self.sign_event(&request_xml)?;
         let raw = self
-            .send_an(SefazService::RecepcaoEvento, environment, &request_xml)
+            .send_an(SefazService::RecepcaoEvento, environment, &signed_xml)
             .await?;
         response_parsers::parse_cancellation_response(&raw)
     }
@@ -120,7 +122,7 @@ impl SefazClient {
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[allow(clippy::too_many_arguments)]
     pub async fn cancel_comprovante_entrega(
         &self,
@@ -141,8 +143,9 @@ impl SefazClient {
             environment,
             tax_id,
         );
+        let signed_xml = self.sign_event(&request_xml)?;
         let raw = self
-            .send_an(SefazService::RecepcaoEvento, environment, &request_xml)
+            .send_an(SefazService::RecepcaoEvento, environment, &signed_xml)
             .await?;
         response_parsers::parse_cancellation_response(&raw)
     }
@@ -155,7 +158,7 @@ impl SefazClient {
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[allow(clippy::too_many_arguments)]
     pub async fn insucesso_entrega(
         &self,
@@ -190,8 +193,9 @@ impl SefazClient {
             environment,
             tax_id,
         );
+        let signed_xml = self.sign_event(&request_xml)?;
         let raw = self
-            .send_an(SefazService::RecepcaoEvento, environment, &request_xml)
+            .send_an(SefazService::RecepcaoEvento, environment, &signed_xml)
             .await?;
         response_parsers::parse_cancellation_response(&raw)
     }
@@ -204,7 +208,7 @@ impl SefazClient {
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[allow(clippy::too_many_arguments)]
     pub async fn cancel_insucesso_entrega(
         &self,
@@ -225,8 +229,9 @@ impl SefazClient {
             environment,
             tax_id,
         );
+        let signed_xml = self.sign_event(&request_xml)?;
         let raw = self
-            .send_an(SefazService::RecepcaoEvento, environment, &request_xml)
+            .send_an(SefazService::RecepcaoEvento, environment, &signed_xml)
             .await?;
         response_parsers::parse_cancellation_response(&raw)
     }
@@ -251,7 +256,7 @@ impl SefazClient {
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[allow(clippy::too_many_arguments)]
     pub async fn prorrogacao(
         &self,
@@ -273,8 +278,9 @@ impl SefazClient {
             environment,
             tax_id,
         );
+        let signed_xml = self.sign_event(&request_xml)?;
         let raw = self
-            .send(SefazService::RecepcaoEvento, uf, environment, &request_xml)
+            .send(SefazService::RecepcaoEvento, uf, environment, &signed_xml)
             .await?;
         response_parsers::parse_cancellation_response(&raw)
     }
@@ -297,7 +303,7 @@ impl SefazClient {
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[allow(clippy::too_many_arguments)]
     pub async fn cancel_prorrogacao(
         &self,
@@ -317,8 +323,9 @@ impl SefazClient {
             environment,
             tax_id,
         );
+        let signed_xml = self.sign_event(&request_xml)?;
         let raw = self
-            .send(SefazService::RecepcaoEvento, uf, environment, &request_xml)
+            .send(SefazService::RecepcaoEvento, uf, environment, &signed_xml)
             .await?;
         response_parsers::parse_cancellation_response(&raw)
     }

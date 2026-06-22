@@ -14,7 +14,7 @@ use super::types::CancellationResponse;
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element.
 pub fn parse_cancellation_response(xml: &str) -> Result<CancellationResponse, FiscalError> {
     let body = strip_soap_envelope(xml);
@@ -33,6 +33,8 @@ pub fn parse_cancellation_response(xml: &str) -> Result<CancellationResponse, Fi
         status_code,
         status_message,
         protocol_number,
+        signed_event_xml: String::new(),
+        raw_response: String::new(),
     })
 }
 

@@ -15,7 +15,7 @@ use super::{accum, fc2, fc4};
 /// giving compile-time safety instead of runtime string matching against a
 /// flat struct full of `Option`s.
 ///
-/// Normal regime CSTs use [`IcmsCst`] instead.
+/// Normal regime CSTs use `IcmsCst` instead.
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub enum IcmsCsosn {
@@ -230,12 +230,12 @@ impl IcmsCsosn {
 }
 
 /// Build the ICMS XML fragment and accumulate totals from a typed
-/// [`IcmsCsosn`] variant.
+/// `IcmsCsosn` variant.
 ///
 /// This is the compile-time-safe counterpart of the original
-/// [`build_icms_xml`] code path for Simples Nacional CSOSNs. It can be used
+/// `build_icms_xml` code path for Simples Nacional CSOSNs. It can be used
 /// directly by new code that already has an `IcmsCsosn`, or indirectly via
-/// the unchanged [`build_icms_xml`] public API (which converts internally).
+/// the unchanged `build_icms_xml` public API (which converts internally).
 ///
 /// # Errors
 ///

@@ -17,7 +17,7 @@ const EVT_CANCELA: &str = "110111";
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if:
+/// Returns `FiscalError::XmlParsing` if:
 /// - Either input is empty
 /// - The `<evento>` tag is missing from `request_xml`
 /// - The `<retEvento>` tag is missing from `response_xml`

@@ -1,12 +1,12 @@
 //! Functions for attaching SEFAZ authorization protocols to signed XML documents.
 //!
 //! Each submodule handles one type of protocol attachment:
-//! - [`protocol`] — NFe authorization (`<nfeProc>`)
-//! - [`inutilizacao`] — Number voiding (`<ProcInutNFe>`)
-//! - [`event`] — Event protocol (`<procEventoNFe>`)
-//! - [`b2b`] — B2B financial wrapper (`<nfeProcB2B>`)
-//! - [`cancellation`] — Cancellation event attachment
-//! - [`helpers`] — Internal XML parsing utilities
+//! - `protocol` — NFe authorization (`<nfeProc>`)
+//! - `inutilizacao` — Number voiding (`<ProcInutNFe>`)
+//! - `event` — Event protocol (`<procEventoNFe>`)
+//! - `b2b` — B2B financial wrapper (`<nfeProcB2B>`)
+//! - `cancellation` — Cancellation event attachment
+//! - `helpers` — Internal XML parsing utilities
 
 mod b2b;
 mod cancellation;
@@ -41,7 +41,7 @@ use helpers::contains_xml_tag;
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if:
+/// Returns `FiscalError::XmlParsing` if:
 /// - Either input is empty
 /// - The request XML does not match any of the known document types
 /// - The delegated function returns an error

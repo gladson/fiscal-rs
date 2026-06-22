@@ -145,7 +145,7 @@ pub(crate) fn build_envelope_with_header(
 /// Returns [`FiscalError::InvalidStateCode`] if `uf` is not a valid
 /// Brazilian state abbreviation.
 ///
-/// Returns [`FiscalError::XmlParsing`] if gzip compression fails.
+/// Returns `FiscalError::XmlParsing` if gzip compression fails.
 pub(crate) fn build_envelope_compressed(
     request_xml: &str,
     uf: &str,

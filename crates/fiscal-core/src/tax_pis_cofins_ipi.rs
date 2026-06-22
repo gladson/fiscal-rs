@@ -1,14 +1,14 @@
 //! PIS, COFINS, IPI, and II (import tax) XML generation for NF-e items.
 //!
 //! Public entry points:
-//! - [`build_pis_xml`] / [`build_pis_st_xml`] — `<PIS>` / `<PISST>` elements
-//! - [`build_cofins_xml`] / [`build_cofins_st_xml`] — `<COFINS>` / `<COFINSST>` elements
-//! - [`build_ipi_xml`] — `<IPI>` element (IPITrib or IPINT)
-//! - [`build_ii_xml`] — `<II>` import-tax element
+//! - `build_pis_xml` / `build_pis_st_xml` — `<PIS>` / `<PISST>` elements
+//! - `build_cofins_xml` / `build_cofins_st_xml` — `<COFINS>` / `<COFINSST>` elements
+//! - `build_ipi_xml` — `<IPI>` element (IPITrib or IPINT)
+//! - `build_ii_xml` — `<II>` import-tax element
 //!
 //! Internally PIS and COFINS share a single generic engine parameterised by
-//! [`ContributionTaxConfig`]; their public APIs accept separate typed structs
-//! ([`PisData`] / [`CofinsData`]) so callers remain independent.
+//! `ContributionTaxConfig`; their public APIs accept separate typed structs
+//! (`PisData` / `CofinsData`) so callers remain independent.
 
 use serde::{Deserialize, Serialize};
 
@@ -41,7 +41,7 @@ const IPI_TRIB_CSTS: &[&str] = &["00", "49", "50", "99"];
 /// PIS tax input data. Monetary fields use [`Cents`], rates use [`Rate4`].
 ///
 /// Build with [`PisData::new`] and chain the optional setters.
-/// Pass to [`build_pis_xml`] to generate the `<PIS>` XML fragment.
+/// Pass to `build_pis_xml` to generate the `<PIS>` XML fragment.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts", derive(ts_rs::TS))]
@@ -99,7 +99,7 @@ impl PisData {
 
 /// PIS-ST (substituição tributária) input data.
 ///
-/// Pass to [`build_pis_st_xml`] to generate the `<PISST>` XML fragment.
+/// Pass to `build_pis_st_xml` to generate the `<PISST>` XML fragment.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts", derive(ts_rs::TS))]
@@ -158,7 +158,7 @@ impl PisStData {
 /// COFINS tax input data. Monetary fields use [`Cents`], rates use [`Rate4`].
 ///
 /// Build with [`CofinsData::new`] and chain the optional setters.
-/// Pass to [`build_cofins_xml`] to generate the `<COFINS>` XML fragment.
+/// Pass to `build_cofins_xml` to generate the `<COFINS>` XML fragment.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts", derive(ts_rs::TS))]
@@ -216,7 +216,7 @@ impl CofinsData {
 
 /// COFINS-ST (substituição tributária) input data.
 ///
-/// Pass to [`build_cofins_st_xml`] to generate the `<COFINSST>` XML fragment.
+/// Pass to `build_cofins_st_xml` to generate the `<COFINSST>` XML fragment.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts", derive(ts_rs::TS))]
@@ -275,7 +275,7 @@ impl CofinsStData {
 /// IPI (Imposto sobre Produtos Industrializados) input data.
 ///
 /// Build with [`IpiData::new`] and chain the optional setters.
-/// Pass to [`build_ipi_xml`] to generate the `<IPI>` XML fragment.
+/// Pass to `build_ipi_xml` to generate the `<IPI>` XML fragment.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "ts", derive(ts_rs::TS))]
@@ -357,7 +357,7 @@ impl IpiData {
 
 /// II (Imposto de Importação — import tax) input data.
 ///
-/// All four fields are required. Pass to [`build_ii_xml`] to generate the
+/// All four fields are required. Pass to `build_ii_xml` to generate the
 /// `<II>` XML fragment.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

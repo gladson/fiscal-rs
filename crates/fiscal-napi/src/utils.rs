@@ -10,7 +10,7 @@ use napi_derive::napi;
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the input is empty, whitespace-only,
+/// Returns `FiscalError::XmlParsing` if the input is empty, whitespace-only,
 /// not valid XML, or not a recognised NFe document type.
 #[napi]
 pub fn identify_xml_type(xml: String) -> napi::Result<String> {
@@ -55,7 +55,7 @@ pub fn identify_xml_type(xml: String) -> napi::Result<String> {
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the input is not valid NFe XML,
+/// Returns `FiscalError::XmlParsing` if the input is not valid NFe XML,
 /// or if conversion to JSON fails.
 #[napi]
 pub fn xml_to_json(xml: String) -> napi::Result<String> {
@@ -85,7 +85,7 @@ pub fn xml_to_json(xml: String) -> napi::Result<String> {
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the input is not valid NFe XML.
+/// Returns `FiscalError::XmlParsing` if the input is not valid NFe XML.
 #[napi(ts_return_type = "Record<string, unknown>")]
 pub fn xml_to_value(xml: String) -> napi::Result<serde_json::Value> {
     fiscal_core::standardize::xml_to_value(&xml)
@@ -111,7 +111,7 @@ pub fn xml_to_value(xml: String) -> napi::Result<serde_json::Value> {
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the input is not valid NFe XML,
+/// Returns `FiscalError::XmlParsing` if the input is not valid NFe XML,
 /// or if the top-level JSON value is not an object (should not happen for
 /// well-formed NFe documents).
 #[napi]
@@ -205,8 +205,8 @@ pub fn build_nfce_consult_url(
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if required XML tags are missing.
-/// Returns [`FiscalError::MissingRequiredField`] if CSC token/ID is missing for v200.
+/// Returns `FiscalError::XmlParsing` if required XML tags are missing.
+/// Returns `FiscalError::MissingRequiredField` if CSC token/ID is missing for v200.
 /// Returns [`FiscalError::XmlGeneration`] if `<Signature` is not found in the XML.
 #[napi]
 pub fn put_qr_tag(params: serde_json::Value) -> napi::Result<String> {
@@ -461,7 +461,7 @@ pub fn replace_unacceptable_characters(input: String) -> napi::Result<String> {
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] with a description of all missing tags.
+/// Returns `FiscalError::XmlParsing` with a description of all missing tags.
 ///
 /// # Examples
 ///
@@ -611,7 +611,7 @@ pub fn is_valid_xml(content: String) -> napi::Result<bool> {
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if:
+/// Returns `FiscalError::XmlParsing` if:
 /// - The XML string is empty or not well-formed.
 /// - Any required structural element is missing or incorrect.
 ///
@@ -642,7 +642,7 @@ pub fn validate_nfe_xml(xml: String, version: String) -> napi::Result<serde_json
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is empty or missing
+/// Returns `FiscalError::XmlParsing` if the XML is empty or missing
 /// required elements (`infNFe`, `nProt`, `DigestValue`).
 #[napi]
 pub fn extract_nfe_validation_data(nfe_xml: String) -> napi::Result<serde_json::Value> {
@@ -675,7 +675,7 @@ pub fn extract_nfe_validation_data(nfe_xml: String) -> napi::Result<serde_json::
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the SEFAZ response is missing
+/// Returns `FiscalError::XmlParsing` if the SEFAZ response is missing
 /// the `<protNFe>` / `<infProt>` structure, or if required fields are
 /// absent.
 #[napi]
@@ -710,7 +710,7 @@ pub fn validate_authorized_nfe(
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is not well-formed or
+/// Returns `FiscalError::XmlParsing` if the XML is not well-formed or
 /// is missing the expected root element.
 #[napi]
 pub fn validate_request_xml(
@@ -817,7 +817,7 @@ pub fn get_sefaz_contingency_url(
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if:
+/// Returns `FiscalError::XmlParsing` if:
 /// - The `nfe_proc_xml` does not contain `<nfeProc>`
 /// - The `b2b_xml` does not contain the expected B2B tag
 /// - Either tag cannot be extracted
@@ -853,7 +853,7 @@ pub fn attach_b2b(
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if:
+/// Returns `FiscalError::XmlParsing` if:
 /// - The `nfe_proc_xml` does not contain `<protNFe>` (not an authorized NF-e)
 /// - The `<protNFe>` does not contain `<chNFe>`
 #[napi]
@@ -871,7 +871,7 @@ pub fn attach_cancellation(nfe_proc_xml: String, cancel_event_xml: String) -> na
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if:
+/// Returns `FiscalError::XmlParsing` if:
 /// - Either input is empty
 /// - The `<evento>` tag is missing from `request_xml`
 /// - The `<retEvento>` tag is missing from `response_xml`
@@ -895,7 +895,7 @@ pub fn attach_event_protocol(request_xml: String, response_xml: String) -> napi:
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if:
+/// Returns `FiscalError::XmlParsing` if:
 /// - Either input is empty
 /// - The `<inutNFe>` tag is missing from `request_xml`
 /// - The `<retInutNFe>` tag is missing from `response_xml`
@@ -922,7 +922,7 @@ pub fn attach_inutilizacao(request_xml: String, response_xml: String) -> napi::R
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if:
+/// Returns `FiscalError::XmlParsing` if:
 /// - Either input is empty
 /// - The request XML does not match any of the known document types
 /// - The delegated function returns an error
@@ -945,13 +945,13 @@ pub fn to_authorize(request_xml: String, response_xml: String) -> napi::Result<S
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if:
+/// Returns `FiscalError::XmlParsing` if:
 /// - Either input is empty
 /// - The `<NFe>` tag is missing from `request_xml`
 /// - No `<protNFe>` can be found in `response_xml`
 ///
 /// Returns [`FiscalError::SefazRejection`] if the protocol status code
-/// is not in [`VALID_PROTOCOL_STATUSES`].
+/// is not in `VALID_PROTOCOL_STATUSES`.
 #[napi]
 pub fn attach_protocol(request_xml: String, response_xml: String) -> napi::Result<String> {
     fiscal_core::complement::attach_protocol(&request_xml, &response_xml)
@@ -1805,7 +1805,7 @@ pub fn build_rtc_atualizacao_data_entrega(
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element at any level.
 #[napi]
 pub fn parse_autorizacao_response(xml: String) -> napi::Result<serde_json::Value> {
@@ -1822,7 +1822,7 @@ pub fn parse_autorizacao_response(xml: String) -> napi::Result<serde_json::Value
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element.
 #[napi]
 pub fn parse_consulta_recibo_response(xml: String) -> napi::Result<serde_json::Value> {
@@ -1839,7 +1839,7 @@ pub fn parse_consulta_recibo_response(xml: String) -> napi::Result<serde_json::V
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element.
 #[napi]
 pub fn parse_consulta_situacao_response(xml: String) -> napi::Result<serde_json::Value> {
@@ -1856,7 +1856,7 @@ pub fn parse_consulta_situacao_response(xml: String) -> napi::Result<serde_json:
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element.
 #[napi]
 pub fn parse_cancellation_response(xml: String) -> napi::Result<serde_json::Value> {
@@ -1872,7 +1872,7 @@ pub fn parse_cancellation_response(xml: String) -> napi::Result<serde_json::Valu
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element.
 #[napi]
 pub fn parse_inutilizacao_response(xml: String) -> napi::Result<serde_json::Value> {
@@ -1889,7 +1889,7 @@ pub fn parse_inutilizacao_response(xml: String) -> napi::Result<serde_json::Valu
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element.
 #[napi]
 pub fn parse_dist_dfe_response(xml: String) -> napi::Result<serde_json::Value> {
@@ -1905,7 +1905,7 @@ pub fn parse_dist_dfe_response(xml: String) -> napi::Result<serde_json::Value> {
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element.
 #[napi]
 pub fn parse_cadastro_response(xml: String) -> napi::Result<serde_json::Value> {
@@ -1922,7 +1922,7 @@ pub fn parse_cadastro_response(xml: String) -> napi::Result<serde_json::Value> {
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element.
 #[napi]
 pub fn parse_csc_response(xml: String) -> napi::Result<serde_json::Value> {
@@ -1939,7 +1939,7 @@ pub fn parse_csc_response(xml: String) -> napi::Result<serde_json::Value> {
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element.
 #[napi]
 pub fn parse_status_response(xml: String) -> napi::Result<serde_json::Value> {

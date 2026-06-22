@@ -15,7 +15,7 @@ use super::helpers::{extract_tag, normalize_nfe_proc_attrs, strip_newlines};
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if:
+/// Returns `FiscalError::XmlParsing` if:
 /// - The `nfe_proc_xml` does not contain `<nfeProc>`
 /// - The `b2b_xml` does not contain the expected B2B tag
 /// - Either tag cannot be extracted

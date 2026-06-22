@@ -1,12 +1,17 @@
 //! ICMS data structures: IcmsPartData, IcmsStData, IcmsUfDestData.
 
+use serde::{Deserialize, Serialize};
+
 use crate::newtypes::{Cents, Rate};
 
 /// Data for building the ICMSPart XML group (ICMS partition between states).
 ///
 /// Used for interstate operations where the ICMS is split between origin and
 /// destination states.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export))]
 #[non_exhaustive]
 pub struct IcmsPartData {
     /// Product origin code (`orig`).
@@ -144,7 +149,10 @@ impl IcmsPartData {
 /// Data for building the ICMSST XML group (ST repasse).
 ///
 /// Used for CST 41 or 60 operations with ST transfer (`repasse`) between states.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export))]
 #[non_exhaustive]
 pub struct IcmsStData {
     /// Product origin code (`orig`).
@@ -259,7 +267,10 @@ impl IcmsStData {
 ///
 /// Represents the ICMS differential (`DIFAL`) owed to the destination state
 /// for interstate B2C operations (EC 87/2015).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS))]
+#[cfg_attr(feature = "ts", ts(export))]
 #[non_exhaustive]
 pub struct IcmsUfDestData {
     /// ICMS calculation base for destination state (`vBCUFDest`).

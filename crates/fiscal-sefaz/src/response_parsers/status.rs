@@ -14,7 +14,7 @@ use super::types::StatusResponse;
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element.
 pub fn parse_status_response(xml: &str) -> Result<StatusResponse, FiscalError> {
     let body = strip_soap_envelope(xml);

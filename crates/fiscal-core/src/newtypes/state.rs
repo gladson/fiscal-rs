@@ -10,7 +10,7 @@ use crate::state_codes::STATE_IBGE_CODES;
 // ── State code ──────────────────────────────────────────────────────────────
 
 /// Two-letter Brazilian state abbreviation (UF), validated against
-/// [`STATE_IBGE_CODES`].
+/// `STATE_IBGE_CODES`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct StateCode(pub &'static str);
 

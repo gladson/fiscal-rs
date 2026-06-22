@@ -21,7 +21,7 @@ use super::manager::Contingency;
 /// Returns [`FiscalError::Contingency`] if the XML belongs to an NFC-e (model 65),
 /// since SVC-AN/SVC-RS contingency does not apply to NFC-e documents.
 ///
-/// Returns [`FiscalError::XmlParsing`] if required XML tags cannot be found.
+/// Returns `FiscalError::XmlParsing` if required XML tags cannot be found.
 pub fn adjust_nfe_contingency(xml: &str, contingency: &Contingency) -> Result<String, FiscalError> {
     // If no contingency is active, return XML unchanged
     if contingency.contingency_type.is_none() {

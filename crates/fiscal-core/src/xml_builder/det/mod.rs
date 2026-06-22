@@ -87,9 +87,21 @@ pub(crate) fn build_det(
     let has_issqn = item.issqn.is_some();
 
     // Build ICMS (skipped when item has ISSQN)
+    //
+    // Disambiguation (mirrors sped-nfe mutually-exclusive aICMSPart/aICMSST):
+    // when the item carries an `icms_part` or `icms_st` group, the ICMSPart /
+    // ICMSST variant is emitted *instead of* the plain CST mapping.
     let mut icms_totals = IcmsTotals::default();
     let icms_xml = if has_issqn {
         String::new()
+    } else if let Some(ref part) = item.icms_part {
+        let (xml, sub) = tax_icms::build_icms_part_xml(part)?;
+        tax_icms::merge_icms_totals(&mut icms_totals, &sub);
+        xml
+    } else if let Some(ref st) = item.icms_st {
+        let (xml, sub) = tax_icms::build_icms_st_xml(st)?;
+        tax_icms::merge_icms_totals(&mut icms_totals, &sub);
+        xml
     } else {
         let icms_variant = build_icms_variant(item, is_simples)?;
         tax_icms::build_icms_xml(&icms_variant, &mut icms_totals)?
@@ -218,6 +230,15 @@ pub(crate) fn build_det(
     }
     if !issqn_xml.is_empty() {
         imposto_children.push(issqn_xml);
+    }
+
+    // ICMSUFDest (DIFAL, EC 87/2015) -- sibling of <ICMS> inside <imposto>.
+    // Per sped-nfe tagimposto ordering: after COFINS/COFINSST, before IS/IBSCBS.
+    // Accumulates vICMSUFDest/vICMSUFRemet/vFCPUFDest into <ICMSTot>.
+    if let Some(ref uf_dest_data) = item.icms_uf_dest {
+        let (uf_dest_xml, uf_dest_totals) = tax_icms::build_icms_uf_dest_xml(uf_dest_data)?;
+        tax_icms::merge_icms_totals(&mut icms_totals, &uf_dest_totals);
+        imposto_children.push(uf_dest_xml);
     }
 
     // Build IS (Imposto Seletivo) -- optional, inside <imposto>

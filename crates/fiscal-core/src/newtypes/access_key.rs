@@ -27,7 +27,7 @@ impl AccessKey {
     ///
     /// # Errors
     ///
-    /// Returns [`FiscalError::InvalidTaxData`] if the key is not exactly
+    /// Returns `FiscalError::InvalidTaxData` if the key is not exactly
     /// 44 ASCII digits.
     pub fn new(key: &str) -> Result<Self, FiscalError> {
         if key.len() != 44 || !key.bytes().all(|b| b.is_ascii_digit()) {
@@ -103,7 +103,7 @@ impl AccessKey {
     ///
     /// # Errors
     ///
-    /// Returns [`FiscalError::InvalidTaxData`] if the cUF in the key does not
+    /// Returns `FiscalError::InvalidTaxData` if the cUF in the key does not
     /// correspond to the given UF abbreviation.
     pub fn validate_uf(&self, expected_uf: &str) -> Result<(), FiscalError> {
         let uf = get_state_by_code(self.state_code())?;

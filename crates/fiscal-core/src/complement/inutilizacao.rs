@@ -15,7 +15,7 @@ use super::helpers::{DEFAULT_VERSION, extract_attribute, extract_tag, join_xml};
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if:
+/// Returns `FiscalError::XmlParsing` if:
 /// - Either input is empty
 /// - The `<inutNFe>` tag is missing from `request_xml`
 /// - The `<retInutNFe>` tag is missing from `response_xml`

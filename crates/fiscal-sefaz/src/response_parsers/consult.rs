@@ -17,7 +17,7 @@ use super::types::{ConsultaReciboResponse, ConsultaSituacaoResponse, ProtocolInf
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element.
 pub fn parse_consulta_recibo_response(xml: &str) -> Result<ConsultaReciboResponse, FiscalError> {
     let body = strip_soap_envelope(xml);
@@ -71,7 +71,7 @@ pub fn parse_consulta_recibo_response(xml: &str) -> Result<ConsultaReciboRespons
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element.
 pub fn parse_consulta_situacao_response(
     xml: &str,

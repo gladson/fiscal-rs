@@ -73,7 +73,7 @@ impl Ncm {
     ///
     /// # Errors
     ///
-    /// Returns [`FiscalError::InvalidTaxData`] if the value is not exactly
+    /// Returns `FiscalError::InvalidTaxData` if the value is not exactly
     /// 8 ASCII digits.
     pub fn new(s: &str) -> Result<Self, FiscalError> {
         if s.len() != 8 || !s.bytes().all(|b| b.is_ascii_digit()) {
@@ -118,7 +118,7 @@ impl Cfop {
     ///
     /// # Errors
     ///
-    /// Returns [`FiscalError::InvalidTaxData`] if the value is not exactly
+    /// Returns `FiscalError::InvalidTaxData` if the value is not exactly
     /// 4 ASCII digits or the first digit is not in 1..=7.
     pub fn new(s: &str) -> Result<Self, FiscalError> {
         if s.len() != 4 || !s.bytes().all(|b| b.is_ascii_digit()) {

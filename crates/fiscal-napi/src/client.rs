@@ -19,7 +19,7 @@ impl SefazClient {
     ///
     /// Returns [`FiscalError::InvalidStateCode`] if `uf` is invalid.
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[napi(ts_return_type = "Promise<Record<string, unknown>>")]
     pub async fn status(&self, uf: String, environment: String) -> napi::Result<serde_json::Value> {
         let sefaz_environment = parse_sefaz_environment(&environment)?;
@@ -39,7 +39,7 @@ impl SefazClient {
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[napi(ts_return_type = "Promise<Record<string, unknown>>")]
     pub async fn authorize(
         &self,
@@ -127,7 +127,7 @@ impl SefazClient {
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[napi(ts_return_type = "Promise<Record<string, unknown>>")]
     pub async fn consult_receipt(
         &self,
@@ -152,7 +152,7 @@ impl SefazClient {
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[napi(ts_return_type = "Promise<Record<string, unknown>>")]
     pub async fn consult(
         &self,
@@ -377,11 +377,12 @@ impl SefazClient {
     /// * `protocol` — protocol number from the authorization response.
     /// * `justification` — reason for cancellation (min 15 characters).
     /// * `tax_id` — CNPJ or CPF of the issuer.
+    /// * `model` — invoice model (55 = NF-e, 65 = NFC-e).
     ///
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[napi(ts_return_type = "Promise<Record<string, unknown>>")]
     pub async fn cancel(
         &self,
@@ -391,6 +392,7 @@ impl SefazClient {
         protocol: String,
         justification: String,
         tax_id: String,
+        model: u8,
     ) -> napi::Result<serde_json::Value> {
         let sefaz_environment = parse_sefaz_environment(&environment)?;
         let resp = self
@@ -402,6 +404,7 @@ impl SefazClient {
                 &protocol,
                 &justification,
                 &tax_id,
+                model,
             )
             .await
             .map_err(to_napi)?;
@@ -416,11 +419,12 @@ impl SefazClient {
     /// * `correction` — correction text describing the change.
     /// * `seq` — event sequence number (increments per correction on same NF-e).
     /// * `tax_id` — CNPJ or CPF of the issuer.
+    /// * `model` — invoice model (55 = NF-e, 65 = NFC-e).
     ///
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[napi(ts_return_type = "Promise<Record<string, unknown>>")]
     pub async fn cce(
         &self,
@@ -430,6 +434,7 @@ impl SefazClient {
         correction: String,
         seq: u32,
         tax_id: String,
+        model: u8,
     ) -> napi::Result<serde_json::Value> {
         let sefaz_environment = parse_sefaz_environment(&environment)?;
         let resp = self
@@ -441,6 +446,7 @@ impl SefazClient {
                 &correction,
                 seq,
                 &tax_id,
+                model,
             )
             .await
             .map_err(to_napi)?;
@@ -485,7 +491,7 @@ impl SefazClient {
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[napi(ts_return_type = "Promise<Record<string, unknown>>")]
     pub async fn manifest(
         &self,
@@ -525,7 +531,7 @@ impl SefazClient {
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[napi(ts_return_type = "Promise<Record<string, unknown>>")]
     pub async fn dist_dfe(
         &self,
@@ -561,7 +567,7 @@ impl SefazClient {
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[napi(ts_return_type = "Promise<Record<string, unknown>>")]
     pub async fn cadastro(
         &self,
@@ -594,7 +600,7 @@ impl SefazClient {
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[napi(ts_return_type = "Promise<Record<string, unknown>>")]
     pub async fn epec(
         &self,
@@ -627,7 +633,7 @@ impl SefazClient {
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[napi(ts_return_type = "Promise<Record<string, unknown>>")]
     pub async fn epec_nfce_status(
         &self,
@@ -662,7 +668,7 @@ impl SefazClient {
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[napi(ts_return_type = "Promise<Record<string, unknown>>")]
     pub async fn epec_nfce(
         &self,
@@ -726,7 +732,7 @@ impl SefazClient {
     /// # Errors
     ///
     /// Returns [`FiscalError::Network`] on transport failure.
-    /// Returns [`FiscalError::XmlParsing`] if the response is malformed.
+    /// Returns `FiscalError::XmlParsing` if the response is malformed.
     #[napi(ts_return_type = "Promise<Record<string, unknown>>")]
     pub async fn download(
         &self,
@@ -882,7 +888,7 @@ impl SefazClient {
     ///
     /// # Errors
     ///
-    /// Returns [`FiscalError::XmlParsing`] if the local XML is missing
+    /// Returns `FiscalError::XmlParsing` if the local XML is missing
     /// required elements.
     /// Returns [`FiscalError::Network`] on SEFAZ communication failure.
     #[napi(ts_return_type = "Promise<Record<string, unknown>>")]

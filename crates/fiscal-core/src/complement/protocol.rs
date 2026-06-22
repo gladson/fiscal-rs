@@ -21,13 +21,13 @@ use super::helpers::{
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if:
+/// Returns `FiscalError::XmlParsing` if:
 /// - Either input is empty
 /// - The `<NFe>` tag is missing from `request_xml`
 /// - No `<protNFe>` can be found in `response_xml`
 ///
 /// Returns [`FiscalError::SefazRejection`] if the protocol status code
-/// is not in [`VALID_PROTOCOL_STATUSES`].
+/// is not in `VALID_PROTOCOL_STATUSES`.
 pub fn attach_protocol(request_xml: &str, response_xml: &str) -> Result<String, FiscalError> {
     if request_xml.is_empty() {
         return Err(FiscalError::XmlParsing("Request XML (NFe) is empty".into()));

@@ -42,7 +42,7 @@ const ROOT_TAG_LIST: &[&str] = &[
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the input is empty, whitespace-only,
+/// Returns `FiscalError::XmlParsing` if the input is empty, whitespace-only,
 /// not valid XML, or not a recognised NFe document type.
 pub fn identify_xml_type(xml: &str) -> Result<String, FiscalError> {
     let trimmed = xml.trim();
@@ -125,7 +125,7 @@ fn find_root_tag(xml: &str) -> Option<&'static str> {
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the input is not valid NFe XML,
+/// Returns `FiscalError::XmlParsing` if the input is not valid NFe XML,
 /// or if conversion to JSON fails.
 pub fn xml_to_json(xml: &str) -> Result<String, FiscalError> {
     let value = xml_to_value(xml)?;
@@ -157,7 +157,7 @@ pub fn xml_to_json(xml: &str) -> Result<String, FiscalError> {
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the input is not valid NFe XML.
+/// Returns `FiscalError::XmlParsing` if the input is not valid NFe XML.
 pub fn xml_to_value(xml: &str) -> Result<serde_json::Value, FiscalError> {
     let root_tag = identify_xml_type(xml)?;
     let full = xml_str_to_json_value(xml.trim())?;
@@ -196,7 +196,7 @@ pub fn xml_to_value(xml: &str) -> Result<serde_json::Value, FiscalError> {
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the input is not valid NFe XML,
+/// Returns `FiscalError::XmlParsing` if the input is not valid NFe XML,
 /// or if the top-level JSON value is not an object (should not happen for
 /// well-formed NFe documents).
 pub fn xml_to_map(xml: &str) -> Result<serde_json::Map<String, serde_json::Value>, FiscalError> {

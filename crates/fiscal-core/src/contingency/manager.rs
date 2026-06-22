@@ -191,7 +191,7 @@ impl Contingency {
         }
     }
 
-    /// Get the [`EmissionType`] enum for the current contingency state.
+    /// Get the `EmissionType` enum for the current contingency state.
     pub fn emission_type_enum(&self) -> EmissionType {
         match self.contingency_type {
             Some(ContingencyType::SvcAn) => EmissionType::SvcAn,

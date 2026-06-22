@@ -4,17 +4,17 @@
 //! This module provides all the data types and XML builders corresponding to
 //! the PHP `TraitTagDetIBSCBS` methods:
 //!
-//! - [`IbsCbsData`] / [`build_ibs_cbs_xml`] -- `<IBSCBS>` element inside `<imposto>`
-//! - Sub-groups: [`GIbsCbsData`], [`GIbsUfData`], [`GIbsMunData`], [`GCbsData`]
-//! - [`GDifData`], [`GDevTribData`], [`GRedData`] -- optional sub-sub-groups
-//! - [`GTribRegularData`] -- tributacao regular
-//! - [`GTribCompraGovData`] -- compra governamental
-//! - [`GIbsCbsMonoData`] -- monofasico (combustiveis)
-//! - [`GTransfCredData`] -- transferencia de credito
-//! - [`GCredPresIbsZfmData`] -- credito presumido ZFM
-//! - [`GAjusteCompetData`] -- ajuste de competencia
-//! - [`GEstornoCredData`] -- estorno de credito
-//! - [`GCredPresOperData`] -- credito presumido por operacao
+//! - `IbsCbsData` / `build_ibs_cbs_xml` -- `<IBSCBS>` element inside `<imposto>`
+//! - Sub-groups: `GIbsCbsData`, `GIbsUfData`, `GIbsMunData`, `GCbsData`
+//! - `GDifData`, `GDevTribData`, `GRedData` -- optional sub-sub-groups
+//! - `GTribRegularData` -- tributacao regular
+//! - `GTribCompraGovData` -- compra governamental
+//! - `GIbsCbsMonoData` -- monofasico (combustiveis)
+//! - `GTransfCredData` -- transferencia de credito
+//! - `GCredPresIbsZfmData` -- credito presumido ZFM
+//! - `GAjusteCompetData` -- ajuste de competencia
+//! - `GEstornoCredData` -- estorno de credito
+//! - `GCredPresOperData` -- credito presumido por operacao
 
 use serde::{Deserialize, Serialize};
 

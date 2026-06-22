@@ -3,14 +3,14 @@
 //! This module provides two layers of validation mirroring the PHP `sped-nfe`
 //! library:
 //!
-//! - **Pre-send validation** ([`validate_nfe_xml`]) — structural checks on an
+//! - **Pre-send validation** (`validate_nfe_xml`) — structural checks on an
 //!   NF-e XML before it is submitted to SEFAZ.  Equivalent to the PHP
 //!   `Validator::isValid()` / `Tools::isValid()` which validates against XSD
 //!   schemas. Since shipping full XSD files is impractical in a Rust library,
 //!   this performs comprehensive structural validation: well-formedness, correct
 //!   root element, namespaces, required fields, and access key format.
 //!
-//! - **Post-authorization validation** ([`SefazClient::sefaz_validate`]) —
+//! - **Post-authorization validation** (`SefazClient::sefaz_validate`) —
 //!   queries SEFAZ by access key and verifies that the local protocol number,
 //!   digest value, and access key match the SEFAZ records.  Equivalent to the
 //!   PHP `Tools::sefazValidate()`.
@@ -126,7 +126,7 @@ pub fn is_valid_xml(content: &str) -> bool {
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if:
+/// Returns `FiscalError::XmlParsing` if:
 /// - The XML string is empty or not well-formed.
 /// - Any required structural element is missing or incorrect.
 ///
@@ -290,7 +290,7 @@ pub struct ValidationResult {
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is empty or missing
+/// Returns `FiscalError::XmlParsing` if the XML is empty or missing
 /// required elements (`infNFe`, `nProt`, `DigestValue`).
 pub fn extract_nfe_validation_data(nfe_xml: &str) -> Result<(String, String, String), FiscalError> {
     if nfe_xml.trim().is_empty() {
@@ -342,7 +342,7 @@ pub fn extract_nfe_validation_data(nfe_xml: &str) -> Result<(String, String, Str
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the SEFAZ response is missing
+/// Returns `FiscalError::XmlParsing` if the SEFAZ response is missing
 /// the `<protNFe>` / `<infProt>` structure, or if required fields are
 /// absent.
 pub fn validate_authorized_nfe(
@@ -416,7 +416,7 @@ fn extract_access_key(xml: &str) -> Option<String> {
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is not well-formed or
+/// Returns `FiscalError::XmlParsing` if the XML is not well-formed or
 /// is missing the expected root element.
 pub fn validate_request_xml(xml: &str, version: &str, method: &str) -> Result<(), FiscalError> {
     if xml.trim().is_empty() {

@@ -17,7 +17,7 @@ use crate::xml_utils::extract_xml_tag_value;
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::MissingRequiredField`] if:
+/// Returns `FiscalError::MissingRequiredField` if:
 /// - v200 is requested without a CSC token or CSC ID
 /// - Offline mode is requested without `issued_at`, `total_value`, or `digest_value` (v200)
 pub fn build_nfce_qr_code_url(params: &NfceQrCodeParams) -> Result<String, FiscalError> {
@@ -53,8 +53,8 @@ pub fn build_nfce_consult_url(
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if required XML tags are missing.
-/// Returns [`FiscalError::MissingRequiredField`] if CSC token/ID is missing for v200.
+/// Returns `FiscalError::XmlParsing` if required XML tags are missing.
+/// Returns `FiscalError::MissingRequiredField` if CSC token/ID is missing for v200.
 /// Returns [`FiscalError::XmlGeneration`] if `<Signature` is not found in the XML.
 pub fn put_qr_tag(params: &PutQRTagParams) -> Result<String, FiscalError> {
     let xml = &params.xml;

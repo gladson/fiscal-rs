@@ -1,6 +1,6 @@
 //! NF-e/NFC-e XML builder module.
 //!
-//! Provides [`InvoiceBuilder`] — a typestate builder that enforces the
+//! Provides `InvoiceBuilder` — a typestate builder that enforces the
 //! invoice lifecycle at compile time:
 //!
 //! ```text
@@ -32,7 +32,7 @@ pub use builder::{Built, Draft, InvoiceBuilder, Signed};
 
 /// Build an NF-e/NFC-e XML directly from a fully populated [`InvoiceBuildData`].
 ///
-/// This is the FFI-friendly alternative to the typestate [`InvoiceBuilder`].
+/// This is the FFI-friendly alternative to the typestate `InvoiceBuilder`.
 /// Intended for bindings (Node.js, Python, WASM) where the data arrives as
 /// a deserialized struct rather than through chainable setters.
 ///

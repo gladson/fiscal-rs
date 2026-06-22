@@ -385,7 +385,7 @@ fn build_issqn_tot(data: &IssqnTotData) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::newtypes::Cents;
+    use crate::newtypes::{Cents, Rate};
     use crate::tax_icms::IcmsTotals;
     use crate::types::IssqnTotData;
 
@@ -675,9 +675,8 @@ mod tests {
         );
 
         // vNF = vProd - vDesc - vICMSDeson + ... = 1000.00 - 0 - 100.00 = 900.00
-        assert_eq!(
+        assert!(
             xml.contains("<vNF>900.00</vNF>"),
-            true,
             "vNF deve ser 900.00 quando indDeduzDeson=1 e vICMSDeson=100.00. XML: {}",
             xml
         );
@@ -705,9 +704,8 @@ mod tests {
         );
 
         // vNF = vProd = 1000.00 (desoneração NÃO deduzida)
-        assert_eq!(
+        assert!(
             xml.contains("<vNF>1000.00</vNF>"),
-            true,
             "vNF deve ser 1000.00 quando indDeduzDeson=false. XML: {}",
             xml
         );
@@ -733,9 +731,8 @@ mod tests {
         );
 
         // vNF = vProd + vServ = 1000.00 + 500.00 = 1500.00
-        assert_eq!(
+        assert!(
             xml.contains("<vNF>1500.00</vNF>"),
-            true,
             "vNF deve ser 1500.00 incluindo vServ=500.00. XML: {}",
             xml
         );
@@ -813,6 +810,58 @@ mod tests {
         assert!(
             !xml.contains("<vICMSUFRemet>"),
             "vICMSUFRemet must be omitted when zero"
+        );
+    }
+
+    #[test]
+    fn icms_tot_sums_difal_across_items() {
+        use crate::tax_icms::{IcmsUfDestData, build_icms_uf_dest_xml, merge_icms_totals};
+
+        // Mirror the build_det flow: each item's IcmsUfDestData accumulates
+        // into IcmsTotals via build_icms_uf_dest_xml, then merge across items.
+        let item1 = IcmsUfDestData::new(Cents(10000), Rate(1700), Rate(1200), Cents(500))
+            .v_fcp_uf_dest(Cents(200))
+            .v_icms_uf_remet(Cents(0));
+        let item2 = IcmsUfDestData::new(Cents(20000), Rate(1800), Rate(1200), Cents(1200))
+            .v_fcp_uf_dest(Cents(300))
+            .v_icms_uf_remet(Cents(0));
+
+        let mut totals = zero_icms();
+        for item in [&item1, &item2] {
+            let (_, t) = build_icms_uf_dest_xml(item).expect("uf dest xml");
+            merge_icms_totals(&mut totals, &t);
+        }
+
+        // Summed: vICMSUFDest 5.00 + 12.00 = 17.00, vFCPUFDest 2.00 + 3.00 = 5.00.
+        assert_eq!(totals.v_icms_uf_dest, Cents(1700));
+        assert_eq!(totals.v_fcp_uf_dest, Cents(500));
+        assert_eq!(totals.v_icms_uf_remet, Cents(0));
+
+        let xml = build_total(
+            100000,
+            &totals,
+            &zero_other(),
+            None,
+            None,
+            None,
+            None,
+            SchemaVersion::PL009,
+            default_method(),
+            None,
+        );
+
+        assert!(
+            xml.contains("<vICMSUFDest>17.00</vICMSUFDest>"),
+            "ICMSTot must sum vICMSUFDest across items. XML: {xml}"
+        );
+        assert!(
+            xml.contains("<vFCPUFDest>5.00</vFCPUFDest>"),
+            "ICMSTot must sum vFCPUFDest across items. XML: {xml}"
+        );
+        // vICMSUFRemet sums to 0 (post-2019 partilha) => omitted.
+        assert!(
+            !xml.contains("<vICMSUFRemet>"),
+            "vICMSUFRemet omitted when summed total is zero. XML: {xml}"
         );
     }
 

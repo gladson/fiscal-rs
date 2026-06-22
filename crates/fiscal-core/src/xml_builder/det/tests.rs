@@ -1,9 +1,11 @@
 use super::*;
 use crate::newtypes::{Cents, IbgeCode, Rate, Rate4};
+use crate::tax_icms::{IcmsPartData, IcmsStData};
 use crate::tax_issqn::IssqnData as TaxIssqnData;
 use crate::types::{
-    ArmaData, CideData, CombData, EncerranteData, GCredData, InvoiceItemData, InvoiceModel,
-    IssuerData, MedData, OrigCombData, RastroData, SefazEnvironment, TaxRegime, VeicProdData,
+    ArmaData, CideData, CombData, EncerranteData, GCredData, IcmsMonoData, InvoiceItemData,
+    InvoiceModel, IssuerData, MedData, OrigCombData, RastroData, SefazEnvironment, TaxRegime,
+    VeicProdData,
 };
 
 fn sample_build_data() -> InvoiceBuildData {
@@ -2647,4 +2649,387 @@ fn v_item_emitted_for_item_without_ibs_cbs_when_another_item_has_it() {
         result.xml.contains("<vItem>"),
         "vItem must be emitted even for items without IBS/CBS when another item has it"
     );
+}
+
+// ── ICMSUFDest (DIFAL, EC 87/2015) ──────────────────────────────────────
+
+#[test]
+fn icms_uf_dest_emits_group_with_correct_values_and_position() {
+    use crate::tax_icms::IcmsUfDestData;
+
+    // Interstate B2C: vProd 100.00, internal rate 17%, inter rate 12%,
+    // partilha 100% destino => vICMSUFDest = (17%-12%) * 100 = 5.00,
+    // vICMSUFRemet = 0 (post-2019).
+    let uf_dest = IcmsUfDestData::new(
+        Cents(10000), // vBCUFDest 100.00
+        Rate(1700),   // pICMSUFDest 17.0000
+        Rate(1200),   // pICMSInter 12.0000
+        Cents(500),   // vICMSUFDest 5.00
+    )
+    .v_icms_uf_remet(Cents(0));
+
+    let item = sample_item().icms_uf_dest(uf_dest);
+    let data = sample_build_data();
+    let result = build_det(&item, &data).expect("build_det should succeed");
+    let xml = &result.xml;
+
+    // Group present with the right child values.
+    assert!(
+        xml.contains("<ICMSUFDest>"),
+        "ICMSUFDest must be emitted. XML: {xml}"
+    );
+    assert!(xml.contains("<vBCUFDest>100.00</vBCUFDest>"), "XML: {xml}");
+    assert!(
+        xml.contains("<pICMSUFDest>17.0000</pICMSUFDest>"),
+        "XML: {xml}"
+    );
+    assert!(
+        xml.contains("<pICMSInter>12.0000</pICMSInter>"),
+        "XML: {xml}"
+    );
+    assert!(
+        xml.contains("<pICMSInterPart>100.0000</pICMSInterPart>"),
+        "XML: {xml}"
+    );
+    assert!(
+        xml.contains("<vICMSUFDest>5.00</vICMSUFDest>"),
+        "XML: {xml}"
+    );
+    assert!(
+        xml.contains("<vICMSUFRemet>0.00</vICMSUFRemet>"),
+        "XML: {xml}"
+    );
+
+    // Position: ICMSUFDest is a sibling of ICMS inside <imposto>, placed
+    // after COFINS and before the end of <imposto> (sped-nfe tagimposto order).
+    let pos_icms = xml.find("<ICMS>").expect("ICMS present");
+    let pos_cofins = xml.find("<COFINS>").expect("COFINS present");
+    let pos_uf_dest = xml.find("<ICMSUFDest>").expect("ICMSUFDest present");
+    assert!(pos_icms < pos_uf_dest, "ICMSUFDest must come after ICMS");
+    assert!(
+        pos_cofins < pos_uf_dest,
+        "ICMSUFDest must come after COFINS"
+    );
+
+    // Totals contributed by this item.
+    assert_eq!(result.icms_totals.v_icms_uf_dest, Cents(500));
+    assert_eq!(result.icms_totals.v_icms_uf_remet, Cents(0));
+}
+
+#[test]
+fn icms_uf_dest_with_fcp_emits_fcp_fields() {
+    use crate::tax_icms::IcmsUfDestData;
+
+    let uf_dest = IcmsUfDestData::new(Cents(10000), Rate(1700), Rate(1200), Cents(500))
+        .v_bc_fcp_uf_dest(Cents(10000)) // vBCFCPUFDest 100.00
+        .p_fcp_uf_dest(Rate(200)) // pFCPUFDest 2.0000
+        .v_fcp_uf_dest(Cents(200)) // vFCPUFDest 2.00
+        .v_icms_uf_remet(Cents(0));
+
+    let item = sample_item().icms_uf_dest(uf_dest);
+    let data = sample_build_data();
+    let result = build_det(&item, &data).expect("build_det should succeed");
+    let xml = &result.xml;
+
+    assert!(
+        xml.contains("<vBCFCPUFDest>100.00</vBCFCPUFDest>"),
+        "XML: {xml}"
+    );
+    assert!(
+        xml.contains("<pFCPUFDest>2.0000</pFCPUFDest>"),
+        "XML: {xml}"
+    );
+    assert!(xml.contains("<vFCPUFDest>2.00</vFCPUFDest>"), "XML: {xml}");
+    assert_eq!(result.icms_totals.v_fcp_uf_dest, Cents(200));
+}
+
+#[test]
+fn item_without_difal_emits_no_icms_uf_dest() {
+    let item = sample_item();
+    let data = sample_build_data();
+    let result = build_det(&item, &data).expect("build_det should succeed");
+
+    assert!(
+        !result.xml.contains("<ICMSUFDest>"),
+        "ICMSUFDest must be omitted when item carries no DIFAL data. XML: {}",
+        result.xml
+    );
+    assert_eq!(result.icms_totals.v_icms_uf_dest, Cents(0));
+    assert_eq!(result.icms_totals.v_icms_uf_remet, Cents(0));
+    assert_eq!(result.icms_totals.v_fcp_uf_dest, Cents(0));
+}
+// ── ICMS monofasico combustiveis (CST 02/15/53/61) ──────────────────────────
+
+fn mono_item(cst: &str) -> InvoiceItemData {
+    InvoiceItemData::new(
+        1,
+        "001",
+        "Gasolina",
+        "27101259",
+        "5656",
+        "LT",
+        1000.0,
+        Cents(500),
+        Cents(500000),
+        cst,
+        Rate(0),
+        Cents(0),
+        "99",
+        "99",
+    )
+    .orig("0")
+}
+
+#[test]
+fn icms_cst02_mono_produces_icms02_group() {
+    let item = mono_item("02").icms_mono(
+        IcmsMonoData::new()
+            .q_bc_mono(100000) // 1000.0000 (raw value scaled by 100)
+            .ad_rem_icms(Rate(1171)) // 11.7100
+            .v_icms_mono(Cents(117100)), // 1171.00
+    );
+    let data = normal_build_data();
+    let result = build_det(&item, &data).expect("build_det should succeed");
+
+    assert!(result.xml.contains("<ICMS02>"));
+    assert!(result.xml.contains("<CST>02</CST>"));
+    assert!(result.xml.contains("<qBCMono>1000.0000</qBCMono>"));
+    assert!(result.xml.contains("<adRemICMS>11.7100</adRemICMS>"));
+    assert!(result.xml.contains("<vICMSMono>1171.00</vICMSMono>"));
+    // contributes to monofasico totals
+    assert_eq!(result.icms_totals.v_icms_mono, Cents(117100));
+    assert_eq!(result.icms_totals.q_bc_mono, 100000);
+}
+
+#[test]
+fn icms_cst15_mono_reten_produces_icms15_group() {
+    let item = mono_item("15").icms_mono(
+        IcmsMonoData::new()
+            .q_bc_mono(100000) // 1000.0000
+            .ad_rem_icms(Rate(1171)) // 11.7100
+            .v_icms_mono(Cents(117100)) // 1171.00
+            .q_bc_mono_reten(50000) // 500.0000
+            .ad_rem_icms_reten(Rate(500)) // 5.0000
+            .v_icms_mono_reten(Cents(25000)), // 250.00
+    );
+    let data = normal_build_data();
+    let result = build_det(&item, &data).expect("build_det should succeed");
+
+    assert!(result.xml.contains("<ICMS15>"));
+    assert!(result.xml.contains("<CST>15</CST>"));
+    assert!(result.xml.contains("<qBCMonoReten>500.0000</qBCMonoReten>"));
+    assert!(
+        result
+            .xml
+            .contains("<adRemICMSReten>5.0000</adRemICMSReten>")
+    );
+    assert!(
+        result
+            .xml
+            .contains("<vICMSMonoReten>250.00</vICMSMonoReten>")
+    );
+    assert_eq!(result.icms_totals.v_icms_mono_reten, Cents(25000));
+    assert_eq!(result.icms_totals.q_bc_mono_reten, 50000);
+}
+
+#[test]
+fn icms_cst53_mono_diferido_produces_icms53_group() {
+    let item = mono_item("53").icms_mono(
+        IcmsMonoData::new()
+            .q_bc_mono(100000) // 1000.0000
+            .ad_rem_icms(Rate(1171)) // 11.7100
+            .v_icms_mono_op(Cents(117100)) // 1171.00
+            .p_dif(Rate(9000)) // 90.0000
+            .v_icms_mono_dif(Cents(105390)) // 1053.90
+            .v_icms_mono(Cents(11710)), // 117.10
+    );
+    let data = normal_build_data();
+    let result = build_det(&item, &data).expect("build_det should succeed");
+
+    assert!(result.xml.contains("<ICMS53>"));
+    assert!(result.xml.contains("<CST>53</CST>"));
+    assert!(result.xml.contains("<vICMSMonoOp>1171.00</vICMSMonoOp>"));
+    assert!(result.xml.contains("<pDif>90.0000</pDif>"));
+    assert!(result.xml.contains("<vICMSMonoDif>1053.90</vICMSMonoDif>"));
+    assert!(result.xml.contains("<vICMSMono>117.10</vICMSMono>"));
+    assert_eq!(result.icms_totals.v_icms_mono, Cents(11710));
+}
+
+#[test]
+fn icms_cst61_mono_retido_produces_icms61_group() {
+    let item = mono_item("61").icms_mono(
+        IcmsMonoData::new()
+            .q_bc_mono_ret(100000) // 1000.0000
+            .ad_rem_icms_ret(Rate(1171)) // 11.7100
+            .v_icms_mono_ret(Cents(117100)), // 1171.00
+    );
+    let data = normal_build_data();
+    let result = build_det(&item, &data).expect("build_det should succeed");
+
+    assert!(result.xml.contains("<ICMS61>"));
+    assert!(result.xml.contains("<CST>61</CST>"));
+    assert!(result.xml.contains("<qBCMonoRet>1000.0000</qBCMonoRet>"));
+    assert!(result.xml.contains("<adRemICMSRet>11.7100</adRemICMSRet>"));
+    assert!(result.xml.contains("<vICMSMonoRet>1171.00</vICMSMonoRet>"));
+    assert_eq!(result.icms_totals.v_icms_mono_ret, Cents(117100));
+    assert_eq!(result.icms_totals.q_bc_mono_ret, 100000);
+}
+
+#[test]
+fn icms_cst02_without_mono_group_errors() {
+    let item = mono_item("02"); // no .icms_mono(...)
+    let data = normal_build_data();
+    let err = build_det(&item, &data).expect_err("missing mono group should error");
+    assert!(matches!(
+        err,
+        FiscalError::MissingRequiredField { field } if field == "icms_mono"
+    ));
+}
+
+// ── ICMSPart (CST 10/90 interstate partition) ───────────────────────────────
+
+#[test]
+fn icms_part_produces_icmspart_group_for_cst10() {
+    let part = IcmsPartData::new(
+        "0",
+        "10",
+        "3",
+        Cents(10000), // vBC
+        Rate(1800),   // pICMS
+        Cents(1800),  // vICMS
+        "4",          // modBCST
+        Cents(12000), // vBCST
+        Rate(1800),   // pICMSST
+        Cents(2160),  // vICMSST
+        Rate(4000),   // pBCOp -> 40.0000
+        "RJ",         // UFST
+    );
+    let item = InvoiceItemData::new(
+        1,
+        "001",
+        "Produto",
+        "27101259",
+        "6102",
+        "UN",
+        1.0,
+        Cents(10000),
+        Cents(10000),
+        "10",
+        Rate(1800),
+        Cents(1800),
+        "99",
+        "99",
+    )
+    .icms_part(part);
+    let data = normal_build_data();
+    let result = build_det(&item, &data).expect("build_det should succeed");
+
+    assert!(result.xml.contains("<ICMSPart>"));
+    // Plain ICMS10 must NOT be emitted when partilha is signalled
+    assert!(!result.xml.contains("<ICMS10>"));
+    assert!(result.xml.contains("<CST>10</CST>"));
+    assert!(result.xml.contains("<pBCOp>40.0000</pBCOp>"));
+    assert!(result.xml.contains("<UFST>RJ</UFST>"));
+    // ICMSPart contributes to vBC / vICMS / vBCST / vST totals
+    assert_eq!(result.icms_totals.v_bc, Cents(10000));
+    assert_eq!(result.icms_totals.v_st, Cents(2160));
+}
+
+// ── ICMSST (CST 41/60 interstate ST repasse) ────────────────────────────────
+
+#[test]
+fn icms_st_produces_icmsst_group_for_cst60() {
+    let st = IcmsStData::new(
+        "0",
+        "60",
+        Cents(12000), // vBCSTRet
+        Cents(2160),  // vICMSSTRet
+        Cents(11000), // vBCSTDest
+        Cents(1980),  // vICMSSTDest
+    );
+    let item = InvoiceItemData::new(
+        1,
+        "001",
+        "Produto",
+        "27101259",
+        "6404",
+        "UN",
+        1.0,
+        Cents(10000),
+        Cents(10000),
+        "60",
+        Rate(0),
+        Cents(0),
+        "99",
+        "99",
+    )
+    .icms_st(st);
+    let data = normal_build_data();
+    let result = build_det(&item, &data).expect("build_det should succeed");
+
+    assert!(result.xml.contains("<ICMSST>"));
+    // Plain ICMS60 must NOT be emitted when repasse is signalled
+    assert!(!result.xml.contains("<ICMS60>"));
+    assert!(result.xml.contains("<CST>60</CST>"));
+    assert!(result.xml.contains("<vBCSTRet>120.00</vBCSTRet>"));
+    assert!(result.xml.contains("<vBCSTDest>110.00</vBCSTDest>"));
+    assert!(result.xml.contains("<vICMSSTDest>19.80</vICMSSTDest>"));
+}
+
+// ── Regression: CST 10/60 without the new groups stay unchanged ──────────────
+
+#[test]
+fn cst10_without_part_group_still_emits_plain_icms10() {
+    let item = InvoiceItemData::new(
+        1,
+        "001",
+        "Produto",
+        "27101259",
+        "5102",
+        "UN",
+        1.0,
+        Cents(10000),
+        Cents(10000),
+        "10",
+        Rate(1800),
+        Cents(1800),
+        "99",
+        "99",
+    )
+    .orig("0")
+    .icms_mod_bc_st(4)
+    .icms_v_bc_st(Cents(12000))
+    .icms_p_icms_st(Rate(1800))
+    .icms_v_icms_st(Cents(2160));
+    let data = normal_build_data();
+    let result = build_det(&item, &data).expect("build_det should succeed");
+
+    assert!(result.xml.contains("<ICMS10>"));
+    assert!(!result.xml.contains("<ICMSPart>"));
+}
+
+#[test]
+fn cst60_without_st_group_still_emits_plain_icms60() {
+    let item = InvoiceItemData::new(
+        1,
+        "001",
+        "Produto",
+        "27101259",
+        "5405",
+        "UN",
+        1.0,
+        Cents(10000),
+        Cents(10000),
+        "60",
+        Rate(0),
+        Cents(0),
+        "99",
+        "99",
+    )
+    .orig("0");
+    let data = normal_build_data();
+    let result = build_det(&item, &data).expect("build_det should succeed");
+
+    assert!(result.xml.contains("<ICMS60>"));
+    assert!(!result.xml.contains("<ICMSST>"));
 }

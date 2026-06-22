@@ -15,7 +15,7 @@ use super::types::{CadastroResponse, CscResponse, CscToken, DistDFeResponse};
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element.
 pub fn parse_dist_dfe_response(xml: &str) -> Result<DistDFeResponse, FiscalError> {
     let body = strip_soap_envelope(xml);
@@ -43,7 +43,7 @@ pub fn parse_dist_dfe_response(xml: &str) -> Result<DistDFeResponse, FiscalError
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element.
 pub fn parse_cadastro_response(xml: &str) -> Result<CadastroResponse, FiscalError> {
     let body = strip_soap_envelope(xml);
@@ -56,9 +56,19 @@ pub fn parse_cadastro_response(xml: &str) -> Result<CadastroResponse, FiscalErro
     let status_message =
         extract_xml_tag_value(scope, "xMotivo").unwrap_or_else(|| "Unknown".into());
 
+    // Dados do contribuinte ficam em `<infCad>` (pode haver mais de um quando o
+    // CNPJ tem várias IEs — pegamos o primeiro). `<IE>`, `<cSit>` e `<xNome>`.
+    let cad = extract_inner_content(scope, "infCad").unwrap_or(scope);
+    let ie = extract_xml_tag_value(cad, "IE");
+    let situacao = extract_xml_tag_value(cad, "cSit");
+    let nome = extract_xml_tag_value(cad, "xNome");
+
     Ok(CadastroResponse {
         status_code,
         status_message,
+        ie,
+        situacao,
+        nome,
         raw_xml: body,
     })
 }
@@ -71,7 +81,7 @@ pub fn parse_cadastro_response(xml: &str) -> Result<CadastroResponse, FiscalErro
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element.
 pub fn parse_csc_response(xml: &str) -> Result<CscResponse, FiscalError> {
     let body = strip_soap_envelope(xml);
@@ -151,6 +161,21 @@ mod tests {
     fn cadastro_response_rejects_malformed_xml() {
         let err = parse_cadastro_response("<garbage>nothing</garbage>").unwrap_err();
         assert!(matches!(err, FiscalError::XmlParsing(_)));
+    }
+
+    #[test]
+    fn cadastro_extrai_ie_situacao_nome_do_infcad() {
+        let xml = concat!(
+            "<retConsCad><infCons>",
+            "<cStat>111</cStat><xMotivo>uma ocorrencia</xMotivo>",
+            "<infCad><IE>111111111111</IE><CNPJ>18885949000181</CNPJ>",
+            "<cSit>1</cSit><xNome>CENTRE SOLUCOES</xNome></infCad>",
+            "</infCons></retConsCad>"
+        );
+        let resp = parse_cadastro_response(xml).unwrap();
+        assert_eq!(resp.ie.as_deref(), Some("111111111111"));
+        assert_eq!(resp.situacao.as_deref(), Some("1"));
+        assert_eq!(resp.nome.as_deref(), Some("CENTRE SOLUCOES"));
     }
 
     // ── parse_csc_response ──────────────────────────────────────────

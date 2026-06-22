@@ -28,7 +28,7 @@ impl TaxId {
     ///
     /// # Errors
     ///
-    /// Returns [`FiscalError::InvalidTaxData`] if the stripped value is not
+    /// Returns `FiscalError::InvalidTaxData` if the stripped value is not
     /// exactly 11 or 14 ASCII digits.
     pub fn new(s: &str) -> Result<Self, FiscalError> {
         let digits: String = s.chars().filter(|c| c.is_ascii_digit()).collect();

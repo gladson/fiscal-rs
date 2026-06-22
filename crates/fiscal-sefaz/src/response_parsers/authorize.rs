@@ -14,7 +14,7 @@ use super::types::AuthorizationResponse;
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element at any level.
 pub fn parse_autorizacao_response(xml: &str) -> Result<AuthorizationResponse, FiscalError> {
     let body = strip_soap_envelope(xml);

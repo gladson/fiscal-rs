@@ -14,9 +14,9 @@ use super::{IcmsVariant, accum, fc2, fc4};
 
 // ── Main builders ───────────────────────────────────────────────────────────
 
-/// Build ICMS XML string from a typed [`IcmsVariant`].
+/// Build ICMS XML string from a typed `IcmsVariant`.
 ///
-/// Delegates to [`build_icms_cst_xml`] or [`build_icms_csosn_xml`] depending
+/// Delegates to `build_icms_cst_xml` or `build_icms_csosn_xml` depending
 /// on the variant, then wraps the result in an `<ICMS>` element and
 /// accumulates totals.
 ///
@@ -49,7 +49,7 @@ pub fn build_icms_xml(
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::MissingRequiredField`] if any required field is
+/// Returns `FiscalError::MissingRequiredField` if any required field is
 /// missing in the data.
 pub fn build_icms_part_xml(data: &IcmsPartData) -> Result<(String, IcmsTotals), FiscalError> {
     let mut totals = create_icms_totals();

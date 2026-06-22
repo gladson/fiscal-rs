@@ -13,7 +13,7 @@ use super::types::InutilizacaoResponse;
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if the XML is malformed or does not
+/// Returns `FiscalError::XmlParsing` if the XML is malformed or does not
 /// contain the expected `<cStat>` element.
 pub fn parse_inutilizacao_response(xml: &str) -> Result<InutilizacaoResponse, FiscalError> {
     let body = strip_soap_envelope(xml);

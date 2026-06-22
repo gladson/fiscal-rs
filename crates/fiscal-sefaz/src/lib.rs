@@ -21,6 +21,14 @@ pub mod urls;
 /// NF-e XML validation: pre-send structural checks and post-authorization SEFAZ verification.
 pub mod validate;
 
+/// MDF-e (model 58) SEFAZ transmission — services, URLs, request builders,
+/// and response parsers (leiaute 3.00, SVRS).
+pub mod mdfe;
+
+/// CT-e (model 57) SEFAZ transmission — services, URLs, request builders, and
+/// response parsers (leiaute 4.00, SVRS / SVSP / own authorizers).
+pub mod cte;
+
 mod soap;
 
 /// Async SEFAZ web service client with mTLS authentication.

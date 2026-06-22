@@ -4,8 +4,8 @@ use crate::newtypes::Cents;
 
 /// Accumulated ICMS totals across all NF-e items.
 ///
-/// This struct is filled incrementally by [`build_icms_xml`] /
-/// [`build_icms_cst_xml`] / [`build_icms_csosn_xml`] as each item is
+/// This struct is filled incrementally by `build_icms_xml` /
+/// `build_icms_cst_xml` / `build_icms_csosn_xml` as each item is
 /// processed, then passed to the XML builder to generate the `<ICMSTot>`
 /// element. Start with [`IcmsTotals::new`] (or [`create_icms_totals`]) and
 /// use [`merge_icms_totals`] when accumulating per-item sub-totals.
@@ -138,7 +138,7 @@ impl IcmsTotals {
     }
 }
 
-/// Create a zeroed-out [`IcmsTotals`] accumulator.
+/// Create a zeroed-out `IcmsTotals` accumulator.
 ///
 /// Equivalent to `IcmsTotals::new()`. Provided as a free function for
 /// ergonomic use in XML builder pipelines.
@@ -159,7 +159,7 @@ pub fn create_icms_totals() -> IcmsTotals {
 ///
 /// All monetary fields in `source` are added to the corresponding fields of
 /// `target`. Call this after each item's ICMS XML has been generated via
-/// [`build_icms_part_xml`] or [`build_icms_st_xml`] (which return their own
+/// `build_icms_part_xml` or `build_icms_st_xml` (which return their own
 /// per-item sub-totals) to keep a running document total.
 pub fn merge_icms_totals(target: &mut IcmsTotals, source: &IcmsTotals) {
     target.v_bc += source.v_bc;

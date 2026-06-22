@@ -18,7 +18,7 @@ pub struct AuthorizationResponse {
     /// Timestamp when SEFAZ received/authorized the document (`dhRecbto`).
     pub authorized_at: Option<String>,
     /// Receipt number (`nRec`), present for asynchronous batch submissions
-    /// (`indSinc=0`). Use this with [`SefazClient::consult_receipt`] to
+    /// (`indSinc=0`). Use this with `SefazClient::consult_receipt` to
     /// poll for the batch processing result.
     pub receipt_number: Option<String>,
 }
@@ -47,6 +47,18 @@ pub struct CancellationResponse {
     pub status_message: String,
     /// Protocol number (`nProt`), present when the event was registered.
     pub protocol_number: Option<String>,
+    /// Signed `<evento>` XML that was sent to SEFAZ, for archival.
+    ///
+    /// Populated by the client event methods (`cancel`, `cce`, …) after a
+    /// successful submission; empty when the struct is produced directly by
+    /// the parser.
+    pub signed_event_xml: String,
+    /// Full raw SEFAZ response (SOAP envelope containing `<retEvento>`), for
+    /// archival.
+    ///
+    /// Populated by the client event methods after a successful submission;
+    /// empty when the struct is produced directly by the parser.
+    pub raw_response: String,
 }
 
 /// Parsed result of a SEFAZ DistDFe (`retDistDFeInt`) response.
@@ -137,6 +149,12 @@ pub struct CadastroResponse {
     pub status_code: String,
     /// Human-readable status message (`xMotivo`).
     pub status_message: String,
+    /// Inscrição Estadual (`<IE>` do primeiro `<infCad>`), se houver.
+    pub ie: Option<String>,
+    /// Situação cadastral (`<cSit>`): `0` não habilitado, `1` habilitado.
+    pub situacao: Option<String>,
+    /// Razão social / nome (`<xNome>`), se houver.
+    pub nome: Option<String>,
     /// Raw inner XML of `<infCons>` for detailed parsing.
     pub raw_xml: String,
 }

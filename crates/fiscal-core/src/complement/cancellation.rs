@@ -39,7 +39,7 @@ const VALID_CANCEL_STATUSES: &[&str] = &["135", "136", "155"];
 ///
 /// # Errors
 ///
-/// Returns [`FiscalError::XmlParsing`] if:
+/// Returns `FiscalError::XmlParsing` if:
 /// - The `nfe_proc_xml` does not contain `<protNFe>` (not an authorized NF-e)
 /// - The `<protNFe>` does not contain `<chNFe>`
 pub fn attach_cancellation(
