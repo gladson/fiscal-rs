@@ -135,3 +135,195 @@ pub async fn post_envio(
         .map_err(|e| MunError::Transporte(format!("read body: {e}")))?;
     Ok((status, body))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::{Ambiente, EmitOutput, Status};
+
+    // ── metodo ────────────────────────────────────────────────────────
+
+    #[test]
+    fn metodo_producao_returns_envio_lote_rps() {
+        assert_eq!(metodo(Ambiente::Producao), "EnvioLoteRPS");
+    }
+
+    #[test]
+    fn metodo_homologacao_returns_teste_envio_lote_rps() {
+        assert_eq!(metodo(Ambiente::Homologacao), "TesteEnvioLoteRPS");
+    }
+
+    // ── soap_action ───────────────────────────────────────────────────
+
+    #[test]
+    fn soap_action_teste_envio() {
+        assert_eq!(
+            soap_action("TesteEnvioLoteRPS"),
+            "http://www.prefeitura.sp.gov.br/nfe/ws/testeenvio"
+        );
+    }
+
+    #[test]
+    fn soap_action_envio_lote_rps() {
+        assert_eq!(
+            soap_action("EnvioLoteRPS"),
+            "http://www.prefeitura.sp.gov.br/nfe/ws/envioLoteRPS"
+        );
+    }
+
+    #[test]
+    fn soap_action_envio_rps() {
+        assert_eq!(
+            soap_action("EnvioRPS"),
+            "http://www.prefeitura.sp.gov.br/nfe/ws/envioRPS"
+        );
+    }
+
+    #[test]
+    fn soap_action_cancelamento() {
+        assert_eq!(
+            soap_action("CancelamentoNFe"),
+            "http://www.prefeitura.sp.gov.br/nfe/ws/cancelamentoNFe"
+        );
+    }
+
+    #[test]
+    fn soap_action_consulta() {
+        assert_eq!(
+            soap_action("ConsultaNFe"),
+            "http://www.prefeitura.sp.gov.br/nfe/ws/consultaNFe"
+        );
+    }
+
+    #[test]
+    fn soap_action_unknown_returns_empty() {
+        assert_eq!(soap_action("MetodoInexistente"), "");
+    }
+
+    // ── soap_envio ────────────────────────────────────────────────────
+
+    #[test]
+    fn soap_envio_produces_valid_soap_envelope() {
+        let envelope = soap_envio("EnvioLoteRPS", "<PedidoEnvioLoteRPS/>", 1);
+        assert!(envelope.contains("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"));
+        assert!(envelope.contains("<soap:Envelope"));
+        assert!(envelope.contains("xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\""));
+        assert!(envelope.contains("<nfe:EnvioLoteRPSRequest>"));
+        assert!(envelope.contains("<nfe:VersaoSchema>1</nfe:VersaoSchema>"));
+        assert!(envelope.contains("<nfe:MensagemXML>"));
+        assert!(envelope.contains("</nfe:EnvioLoteRPSRequest>"));
+    }
+
+    #[test]
+    fn soap_envio_escapes_xml_special_chars_in_body() {
+        let envelope = soap_envio(
+            "TesteEnvioLoteRPS",
+            "<Lote><RPS><Valor>100 & 50</Valor></RPS></Lote>",
+            2,
+        );
+        // The & must be escaped to &amp; inside the MensagemXML text content.
+        assert!(envelope.contains("100 &amp; 50"));
+        assert!(!envelope.contains("<RPS>100 & 50</RPS>"));
+        assert!(envelope.contains("<nfe:VersaoSchema>2</nfe:VersaoSchema>"));
+    }
+
+    #[test]
+    fn soap_envio_uses_correct_method_name_as_wrapper() {
+        let envelope = soap_envio("CancelamentoNFe", "<Cancelamento/>", 1);
+        assert!(envelope.contains("<nfe:CancelamentoNFeRequest>"));
+    }
+
+    // ── escape / unescape roundtrip ────────────────────────────────────
+
+    #[test]
+    fn escape_and_unescape_roundtrip() {
+        let original = "<Tag attr=\"value\">text &amp; data</Tag>";
+        let escaped = super::escape(original);
+        // The original already has &amp; — escape will double-encode the & in &amp;
+        // This tests that unescape correctly handles what escape produces.
+        let plain = "<root>a < b & c > d</root>";
+        let escaped = super::escape(plain);
+        assert!(!escaped.contains('<'));
+        assert!(!escaped.contains('>'));
+        assert!(!escaped.contains('&'));
+        let restored = super::unescape(&escaped);
+        assert_eq!(restored, plain);
+    }
+
+    // ── parse_retorno ─────────────────────────────────────────────────
+
+    #[test]
+    fn parse_retorno_autorizado_extrai_campos() {
+        let body = "<RetornoEnvioLoteRPS>\
+            <Sucesso>true</Sucesso>\
+            <NumeroNFe>42</NumeroNFe>\
+            <CodigoVerificacao>XYZ-123</CodigoVerificacao>\
+            <DataEmissaoNFe>2025-06-01</DataEmissaoNFe>\
+            </RetornoEnvioLoteRPS>";
+        let out = parse_retorno(200, body);
+        assert_eq!(out.status, Status::Autorizado);
+        assert_eq!(out.numero_nfse.as_deref(), Some("42"));
+        assert_eq!(out.codigo_verificacao.as_deref(), Some("XYZ-123"));
+        assert_eq!(out.data_emissao.as_deref(), Some("2025-06-01"));
+        assert!(out.xml.is_some()); // autorizado = Some(inner)
+    }
+
+    #[test]
+    fn parse_retorno_rejeitado_extrai_codigo_e_descricao() {
+        let body = "<RetornoEnvioLoteRPS>\
+            <Sucesso>false</Sucesso>\
+            <Codigo>E500</Codigo>\
+            <Descricao>Erro interno do servidor</Descricao>\
+            </RetornoEnvioLoteRPS>";
+        let out = parse_retorno(200, body);
+        assert_eq!(out.status, Status::Rejeitado);
+        assert_eq!(out.numero_nfse, None);
+        assert_eq!(out.xml, None);
+        assert_eq!(
+            out.motivo.as_deref(),
+            Some("E500: Erro interno do servidor")
+        );
+    }
+
+    #[test]
+    fn parse_retorno_http_error_without_sucesso_marks_rejected() {
+        let body = "<html>502 Bad Gateway</html>";
+        let out = parse_retorno(502, body);
+        assert_eq!(out.status, Status::Rejeitado);
+    }
+
+    #[test]
+    fn parse_retorno_sucesso_false_but_no_codigo_uses_truncated_body() {
+        let body = "<RetornoEnvioLoteRPS>\
+            <Sucesso>false</Sucesso>\
+            </RetornoEnvioLoteRPS>";
+        let out = parse_retorno(200, body);
+        assert_eq!(out.status, Status::Rejeitado);
+        assert!(out.motivo.is_some());
+    }
+
+    // ── tag_val ───────────────────────────────────────────────────────
+
+    #[test]
+    fn tag_val_extracts_value_with_ns_prefix() {
+        let xml = "<nfe:NumeroNFe>42</nfe:NumeroNFe>";
+        assert_eq!(super::tag_val(xml, "NumeroNFe").as_deref(), Some("42"));
+    }
+
+    #[test]
+    fn tag_val_extracts_value_without_ns_prefix() {
+        let xml = "<NumeroNFe>42</NumeroNFe>";
+        assert_eq!(super::tag_val(xml, "NumeroNFe").as_deref(), Some("42"));
+    }
+
+    #[test]
+    fn tag_val_returns_none_for_empty_tag() {
+        let xml = "<NumeroNFe></NumeroNFe>";
+        assert_eq!(super::tag_val(xml, "NumeroNFe"), None);
+    }
+
+    #[test]
+    fn tag_val_returns_none_for_missing_tag() {
+        assert_eq!(super::tag_val("<other/>", "NumeroNFe"), None);
+    }
+}

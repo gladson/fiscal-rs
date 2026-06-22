@@ -73,3 +73,72 @@ pub trait MunicipalProvider: Send + Sync {
         Err(crate::error::MunError::NaoImplementado("cancelar"))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── ProviderCtx Debug (sempre disponível) ────────────────────────
+
+    #[test]
+    fn provider_ctx_debug_masks_sensitive_fields() {
+        let ctx = ProviderCtx {
+            ambiente: Ambiente::Homologacao,
+            pfx_der: vec![1u8, 2, 3, 4, 5],
+            senha: "secret".into(),
+            versao: 1,
+            inscricao_municipal: Some("123456".into()),
+            cnpj: Some("06157250000116".into()),
+        };
+        let debug = format!("{ctx:?}");
+        // Should not expose the password.
+        assert!(!debug.contains("secret"));
+        // Should indicate PFX length, not raw bytes.
+        assert!(debug.contains("<5 bytes>"));
+        // Should show the ambiente.
+        assert!(debug.contains("Homologacao"));
+    }
+
+    #[test]
+    fn provider_ctx_default_fields() {
+        let ctx = ProviderCtx {
+            ambiente: Ambiente::Homologacao,
+            pfx_der: vec![],
+            senha: String::new(),
+            versao: 1,
+            inscricao_municipal: None,
+            cnpj: None,
+        };
+        assert_eq!(ctx.versao, 1);
+        assert_eq!(ctx.inscricao_municipal, None);
+        assert_eq!(ctx.cnpj, None);
+    }
+
+    #[test]
+    fn provider_ctx_with_cnpj_and_im() {
+        let ctx = ProviderCtx {
+            ambiente: Ambiente::Producao,
+            pfx_der: vec![1, 2, 3],
+            senha: "pwd".into(),
+            versao: 2,
+            inscricao_municipal: Some("98765".into()),
+            cnpj: Some("12345678000190".into()),
+        };
+        assert_eq!(ctx.versao, 2);
+        assert_eq!(ctx.inscricao_municipal.as_deref(), Some("98765"));
+        assert_eq!(ctx.cnpj.as_deref(), Some("12345678000190"));
+    }
+
+    // ── Ambiente::from_tp_amb (from model.rs, tested here) ───────────
+
+    #[test]
+    fn from_tp_amb_producao() {
+        assert_eq!(Ambiente::from_tp_amb(1), Ambiente::Producao);
+    }
+
+    #[test]
+    fn from_tp_amb_homologacao() {
+        assert_eq!(Ambiente::from_tp_amb(2), Ambiente::Homologacao);
+        assert_eq!(Ambiente::from_tp_amb(0), Ambiente::Homologacao);
+    }
+}

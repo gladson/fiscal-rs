@@ -330,3 +330,259 @@ impl SefazClient {
         response_parsers::parse_cancellation_response(&raw)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::SefazClient;
+    use crate::request_builders;
+    use fiscal_core::types::SefazEnvironment;
+
+    fn test_pfx() -> Vec<u8> {
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../..",
+            "/tests/fixtures/certs/novo_cert_cnpj_06157250000116_senha_minhasenha.pfx"
+        );
+        std::fs::read(path).expect("test PFX not found")
+    }
+
+    const TEST_PASSWORD: &str = "minhasenha";
+
+    fn build_client() -> SefazClient {
+        SefazClient::new(&test_pfx(), TEST_PASSWORD).expect("client builds")
+    }
+
+    const TEST_ACCESS_KEY: &str = "41250106157250000116550010000000011000000017";
+    const TEST_TAX_ID: &str = "06157250000116";
+
+    // ── ator_interessado (local signing + UF rejection) ──────────────
+    // ator_interessado calls send_an which goes to AN (no UF), but the
+    // request builder still needs valid inputs.
+
+    #[test]
+    fn ator_interessado_builds_and_signs() {
+        let client = build_client();
+        let request_xml = request_builders::build_ator_interessado_request(
+            TEST_ACCESS_KEY,
+            2, // tp_autor = destinatario
+            "1.0",
+            Some("12345678000190"),
+            None,
+            1,
+            "SP",
+            1,
+            SefazEnvironment::Homologation,
+            TEST_TAX_ID,
+        );
+        assert!(request_xml.contains("110150"));
+        assert!(request_xml.contains(TEST_ACCESS_KEY));
+
+        let signed = client.sign_event(&request_xml).expect("signs");
+        assert!(signed.contains("<Signature"));
+        assert!(signed.contains("<X509Certificate>"));
+    }
+
+    // ── comprovante_entrega (local signing) ──────────────────────────
+
+    #[test]
+    fn comprovante_entrega_builds_and_signs() {
+        let client = build_client();
+        let request_xml = request_builders::build_comprovante_entrega_request(
+            TEST_ACCESS_KEY,
+            "1.0",
+            "2025-01-06T14:00:00-02:00",
+            "12345678900",
+            "RECIPIENT NAME",
+            None, // lat
+            None, // long
+            "abc123hash",
+            "2025-01-06T14:05:00-02:00",
+            "SP",
+            1,
+            SefazEnvironment::Homologation,
+            TEST_TAX_ID,
+        );
+        assert!(request_xml.contains("110130"));
+        assert!(request_xml.contains(TEST_ACCESS_KEY));
+
+        let signed = client.sign_event(&request_xml).expect("signs");
+        assert!(signed.contains("<Signature"));
+    }
+
+    // ── cancel_comprovante_entrega (local signing) ───────────────────
+
+    #[test]
+    fn cancel_comprovante_entrega_builds_and_signs() {
+        let client = build_client();
+        let request_xml = request_builders::build_cancel_comprovante_entrega_request(
+            TEST_ACCESS_KEY,
+            "1.0",
+            "123456789012345",
+            "SP",
+            2,
+            SefazEnvironment::Homologation,
+            TEST_TAX_ID,
+        );
+        assert!(request_xml.contains("110131"));
+        assert!(request_xml.contains("123456789012345"));
+
+        let signed = client.sign_event(&request_xml).expect("signs");
+        assert!(signed.contains("<Signature"));
+    }
+
+    // ── insucesso_entrega (local signing) ─────────────────────────────
+
+    #[test]
+    fn insucesso_entrega_builds_and_signs() {
+        let client = build_client();
+        let request_xml = request_builders::build_insucesso_entrega_request(
+            TEST_ACCESS_KEY,
+            "1.0",
+            "2025-01-06T16:00:00-02:00",
+            Some(1),
+            4, // reason_type=4 requires xJustMotivo
+            Some("Cliente ausente no local"),
+            None, // lat
+            None, // long
+            "def456hash",
+            "2025-01-06T16:05:00-02:00",
+            "SP",
+            1,
+            SefazEnvironment::Homologation,
+            TEST_TAX_ID,
+        );
+        assert!(request_xml.contains("110192"));
+        assert!(request_xml.contains("Cliente ausente no local"));
+
+        let signed = client.sign_event(&request_xml).expect("signs");
+        assert!(signed.contains("<Signature"));
+    }
+
+    // ── cancel_insucesso_entrega (local signing) ─────────────────────
+
+    #[test]
+    fn cancel_insucesso_entrega_builds_and_signs() {
+        let client = build_client();
+        let request_xml = request_builders::build_cancel_insucesso_entrega_request(
+            TEST_ACCESS_KEY,
+            "1.0",
+            "123456789012346",
+            "SP",
+            2,
+            SefazEnvironment::Homologation,
+            TEST_TAX_ID,
+        );
+        assert!(request_xml.contains("110193"));
+        assert!(request_xml.contains("123456789012346"));
+
+        let signed = client.sign_event(&request_xml).expect("signs");
+        assert!(signed.contains("<Signature"));
+    }
+
+    // ── prorrogacao (UF rejection + local signing) ───────────────────
+
+    #[tokio::test]
+    async fn prorrogacao_rejects_invalid_uf() {
+        let client = build_client();
+        let err = client
+            .prorrogacao(
+                "XX",
+                SefazEnvironment::Homologation,
+                TEST_ACCESS_KEY,
+                "123456789",
+                &[],
+                false,
+                1,
+                TEST_TAX_ID,
+            )
+            .await
+            .unwrap_err();
+        assert!(matches!(err, fiscal_core::FiscalError::InvalidStateCode(_)));
+    }
+
+    #[test]
+    fn prorrogacao_builds_and_signs() {
+        let client = build_client();
+        let items = vec![request_builders::ProrrogacaoItem {
+            num_item: 1,
+            qtde: 10.0,
+        }];
+        let request_xml = request_builders::build_prorrogacao_request(
+            TEST_ACCESS_KEY,
+            "123456789",
+            &items,
+            false, // first term: tpEvento = 111500
+            1,
+            SefazEnvironment::Homologation,
+            TEST_TAX_ID,
+        );
+        assert!(request_xml.contains("111500"));
+
+        let signed = client.sign_event(&request_xml).expect("signs");
+        assert!(signed.contains("<Signature"));
+    }
+
+    #[test]
+    fn prorrogacao_second_term_uses_111501() {
+        let items = vec![request_builders::ProrrogacaoItem {
+            num_item: 1,
+            qtde: 10.0,
+        }];
+        let request_xml = request_builders::build_prorrogacao_request(
+            TEST_ACCESS_KEY,
+            "123456789",
+            &items,
+            true, // second term: tpEvento = 111501
+            2,
+            SefazEnvironment::Homologation,
+            TEST_TAX_ID,
+        );
+        assert!(request_xml.contains("111501"));
+    }
+
+    // ── cancel_prorrogacao (UF rejection + local signing) ─────────────
+
+    #[tokio::test]
+    async fn cancel_prorrogacao_rejects_invalid_uf() {
+        let client = build_client();
+        let err = client
+            .cancel_prorrogacao(
+                "XX",
+                SefazEnvironment::Homologation,
+                TEST_ACCESS_KEY,
+                "123456789",
+                false,
+                1,
+                TEST_TAX_ID,
+            )
+            .await
+            .unwrap_err();
+        assert!(matches!(err, fiscal_core::FiscalError::InvalidStateCode(_)));
+    }
+
+    #[test]
+    fn cancel_prorrogacao_first_term_uses_111502() {
+        let request_xml = request_builders::build_cancel_prorrogacao_request(
+            TEST_ACCESS_KEY,
+            "123456789",
+            false, // cancelling first term
+            2,
+            SefazEnvironment::Homologation,
+            TEST_TAX_ID,
+        );
+        assert!(request_xml.contains("111502"));
+    }
+
+    #[test]
+    fn cancel_prorrogacao_second_term_uses_111503() {
+        let request_xml = request_builders::build_cancel_prorrogacao_request(
+            TEST_ACCESS_KEY,
+            "123456789",
+            true, // cancelling second term
+            3,
+            SefazEnvironment::Homologation,
+            TEST_TAX_ID,
+        );
+        assert!(request_xml.contains("111503"));
+    }
+}

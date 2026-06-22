@@ -34,3 +34,79 @@ impl fmt::Display for MunError {
 impl std::error::Error for MunError {}
 
 pub type Result<T> = std::result::Result<T, MunError>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── Display for each variant ──────────────────────────────────────
+
+    #[test]
+    fn display_municipio_nao_suportado() {
+        let e = MunError::MunicipioNaoSuportado("3304557".into());
+        assert_eq!(format!("{e}"), "município não suportado: 3304557");
+    }
+
+    #[test]
+    fn display_nao_implementado() {
+        let e = MunError::NaoImplementado("cancelar");
+        assert_eq!(format!("{e}"), "não implementado: cancelar");
+    }
+
+    #[test]
+    fn display_validacao() {
+        let e = MunError::Validacao("CNPJ inválido".into());
+        assert_eq!(format!("{e}"), "validação: CNPJ inválido");
+    }
+
+    #[test]
+    fn display_xml() {
+        let e = MunError::Xml("tag não fechada".into());
+        assert_eq!(format!("{e}"), "xml: tag não fechada");
+    }
+
+    #[test]
+    fn display_assinatura() {
+        let e = MunError::Assinatura("chave não carregada".into());
+        assert_eq!(format!("{e}"), "assinatura: chave não carregada");
+    }
+
+    #[test]
+    fn display_transporte() {
+        let e = MunError::Transporte("connection refused".into());
+        assert_eq!(format!("{e}"), "transporte: connection refused");
+    }
+
+    // ── Error trait ───────────────────────────────────────────────────
+
+    #[test]
+    fn mun_error_implements_std_error() {
+        let e: Box<dyn std::error::Error> = Box::new(MunError::Validacao("teste".into()));
+        // source() returns None (no inner error).
+        assert!(e.source().is_none());
+    }
+
+    // ── Debug ─────────────────────────────────────────────────────────
+
+    #[test]
+    fn debug_contains_variant_and_message() {
+        let e = MunError::Xml("parse error at line 1".into());
+        let debug = format!("{e:?}");
+        assert!(debug.contains("Xml"));
+        assert!(debug.contains("parse error at line 1"));
+    }
+
+    // ── Result type alias ─────────────────────────────────────────────
+
+    #[test]
+    fn result_ok_works() {
+        let r: Result<i32> = Ok(42);
+        assert_eq!(r.unwrap(), 42);
+    }
+
+    #[test]
+    fn result_err_works() {
+        let r: Result<i32> = Err(MunError::Transporte("timeout".into()));
+        assert!(r.is_err());
+    }
+}

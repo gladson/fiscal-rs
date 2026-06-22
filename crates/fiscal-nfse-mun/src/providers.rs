@@ -155,3 +155,122 @@ impl MunicipalProvider for Simpliss {
         ))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::provider::MunicipalProvider;
+
+    // ── DSF ───────────────────────────────────────────────────────────
+
+    #[test]
+    fn dsf_nome() {
+        assert_eq!(DSF.nome(), "DSF");
+    }
+
+    #[test]
+    fn dsf_municipios() {
+        assert!(DSF.municipios().contains(&"3552205")); // Sorocaba
+    }
+
+    #[test]
+    fn dsf_endpoints() {
+        assert!(Dsf::ENDPOINTS.homologacao.contains("homolsod"));
+        assert!(Dsf::ENDPOINTS.producao.contains("sorocaba"));
+    }
+
+    // ── GINFES ────────────────────────────────────────────────────────
+
+    #[test]
+    fn ginfes_nome() {
+        assert_eq!(GINFES.nome(), "GINFES");
+    }
+
+    #[test]
+    fn ginfes_municipios() {
+        assert!(GINFES.municipios().contains(&"3518800")); // Guarulhos
+    }
+
+    #[test]
+    fn ginfes_endpoints() {
+        assert!(Ginfes::ENDPOINTS.homologacao.contains("homologacao.ginfes"));
+        assert!(Ginfes::ENDPOINTS.producao.contains("producao.ginfes"));
+    }
+
+    // ── SigISS ────────────────────────────────────────────────────────
+
+    #[test]
+    fn sigiss_nome() {
+        assert_eq!(SIGISS.nome(), "SigISS");
+    }
+
+    #[test]
+    fn sigiss_municipios() {
+        assert!(SIGISS.municipios().contains(&"3513801")); // Caraguatatuba
+    }
+
+    #[test]
+    fn sigiss_endpoints() {
+        assert!(SigIss::ENDPOINTS.homologacao.contains("testecaraguatatuba"));
+        assert!(SigIss::ENDPOINTS.producao.contains("caraguatatuba"));
+    }
+
+    // ── SAOPAULO ──────────────────────────────────────────────────────
+
+    #[test]
+    fn saopaulo_nome() {
+        assert_eq!(SAOPAULO.nome(), "SAOPAULO");
+    }
+
+    #[test]
+    fn saopaulo_municipios() {
+        assert!(SAOPAULO.municipios().contains(&"3550308")); // São Paulo
+    }
+
+    #[test]
+    fn saopaulo_ws_endpoint() {
+        assert!(SaoPaulo::WS.contains("nfews.prefeitura.sp.gov.br"));
+        assert!(SaoPaulo::WS.contains("lotenfe.asmx"));
+    }
+
+    // ── SIMPLISS ──────────────────────────────────────────────────────
+
+    #[test]
+    fn simpliss_nome() {
+        assert_eq!(SPEEDGOV.nome(), "Simpliss");
+    }
+
+    #[test]
+    fn simpliss_municipios() {
+        assert!(SPEEDGOV.municipios().contains(&"3547304")); // Santana de Parnaíba
+    }
+
+    #[test]
+    fn simpliss_endpoints() {
+        assert!(
+            Simpliss::ENDPOINTS
+                .homologacao
+                .contains("homologacaoabrasf.simplissweb")
+        );
+        assert!(
+            Simpliss::ENDPOINTS
+                .producao
+                .contains("santanadeparnaiba.simplissweb")
+        );
+        assert!(Simpliss::ENDPOINTS.producao.contains("/v2/nfsen"));
+    }
+
+    // ── Endpoints struct ──────────────────────────────────────────────
+
+    #[test]
+    fn endpoints_debug_and_clone() {
+        let eps = Endpoints {
+            homologacao: "http://h",
+            producao: "http://p",
+        };
+        let cloned = eps;
+        assert_eq!(cloned.homologacao, "http://h");
+        assert_eq!(cloned.producao, "http://p");
+        format!("{eps:?}"); // Debug
+    }
+}

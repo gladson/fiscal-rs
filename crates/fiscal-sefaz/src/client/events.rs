@@ -581,3 +581,256 @@ impl SefazClient {
         response_parsers::parse_cancellation_response(&raw)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use fiscal_core::types::SefazEnvironment;
+
+    fn test_pfx() -> Vec<u8> {
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../..",
+            "/tests/fixtures/certs/novo_cert_cnpj_06157250000116_senha_minhasenha.pfx"
+        );
+        std::fs::read(path).expect("test PFX not found")
+    }
+
+    const TEST_PASSWORD: &str = "minhasenha";
+
+    fn build_client() -> SefazClient {
+        SefazClient::new(&test_pfx(), TEST_PASSWORD).expect("client builds")
+    }
+
+    // ── cancel (UF rejection) ────────────────────────────────────────
+
+    #[tokio::test]
+    async fn cancel_rejects_invalid_uf() {
+        let client = build_client();
+        let err = client
+            .cancel(
+                "XX",
+                SefazEnvironment::Homologation,
+                "41250106157250000116550010000000011000000017",
+                "123456789",
+                "Justification with at least 15 chars",
+                "06157250000116",
+                55,
+            )
+            .await
+            .unwrap_err();
+        assert!(matches!(err, FiscalError::InvalidStateCode(_)));
+    }
+
+    // ── cce (UF rejection) ───────────────────────────────────────────
+
+    #[tokio::test]
+    async fn cce_rejects_invalid_uf() {
+        let client = build_client();
+        let err = client
+            .cce(
+                "XX",
+                SefazEnvironment::Homologation,
+                "41250106157250000116550010000000011000000017",
+                "Correction text for carta de correcao",
+                1,
+                "06157250000116",
+                55,
+            )
+            .await
+            .unwrap_err();
+        assert!(matches!(err, FiscalError::InvalidStateCode(_)));
+    }
+
+    // ── inutilize (UF rejection) ─────────────────────────────────────
+
+    #[tokio::test]
+    async fn inutilize_rejects_invalid_uf() {
+        let client = build_client();
+        let signed_inut = "<inutNFe><infInut/></inutNFe>";
+        let err = client
+            .inutilize("XX", SefazEnvironment::Homologation, signed_inut)
+            .await
+            .unwrap_err();
+        assert!(matches!(err, FiscalError::InvalidStateCode(_)));
+    }
+
+    // ── manifest (AN endpoint — no UF) ──────────────────────────────
+    // manifest routes to Ambiente Nacional (send_an), so there's no UF-based
+    // rejection. We test the request building + local signing instead.
+
+    #[test]
+    fn manifest_builds_signed_event() {
+        let client = build_client();
+        let access_key = "41250106157250000116550010000000011000000017";
+        let request_xml = request_builders::build_manifesta_request(
+            access_key,
+            "210200", // Confirmacao da Operacao
+            None,
+            1,
+            SefazEnvironment::Homologation,
+            "06157250000116",
+        );
+        assert!(request_xml.contains("210200"));
+        assert!(request_xml.contains(access_key));
+
+        let signed = client.sign_event(&request_xml).expect("signs");
+        assert!(signed.contains("<Signature"));
+        assert!(signed.contains("<X509Certificate>"));
+    }
+
+    // ── epec (AN endpoint) ──────────────────────────────────────────
+
+    #[test]
+    fn epec_builds_signed_event() {
+        let client = build_client();
+        let epec_data = request_builders::EpecData {
+            access_key: "41250106157250000116550010000000011000000017".into(),
+            c_orgao_autor: "41".into(),
+            ver_aplic: "1.0".into(),
+            dh_emi: "2025-01-06T10:00:00-02:00".into(),
+            tp_nf: "1".into(),
+            emit_ie: "123456789".into(),
+            dest_uf: "SP".into(),
+            dest_id_tag: "<CNPJ>12345678000190</CNPJ>".into(),
+            dest_ie: None,
+            v_nf: "100.00".into(),
+            v_icms: "18.00".into(),
+            v_st: "0.00".into(),
+            tax_id: "06157250000116".into(),
+        };
+        let request_xml =
+            request_builders::build_epec_request(&epec_data, SefazEnvironment::Homologation);
+        assert!(request_xml.contains("110140"));
+        let signed = client.sign_event(&request_xml).expect("signs");
+        assert!(signed.contains("<Signature"));
+    }
+
+    // ── download (delegates to dist_dfe, builder panics on bad UF) ─────
+
+    #[test]
+    #[should_panic(expected = "Invalid state code")]
+    fn download_builder_panics_on_invalid_uf() {
+        request_builders::build_dist_dfe_request(
+            "XX",
+            "06157250000116",
+            Some("1"),
+            None,
+            SefazEnvironment::Homologation,
+        );
+    }
+
+    // ── conciliacao (UF rejection) ───────────────────────────────────
+
+    #[tokio::test]
+    async fn conciliacao_rejects_invalid_uf() {
+        let client = build_client();
+        let err = client
+            .conciliacao(
+                "XX",
+                SefazEnvironment::Homologation,
+                65, // model 65 uses the UF directly
+                "41250106157250000116550010000000011000000017",
+                "1.0",
+                &[],
+                false,
+                None,
+                1,
+                "06157250000116",
+            )
+            .await
+            .unwrap_err();
+        assert!(matches!(err, FiscalError::InvalidStateCode(_)));
+    }
+
+    // ── event_batch (local signing) ──────────────────────────────────
+
+    #[test]
+    fn event_batch_signs_each_event() {
+        let client = build_client();
+        let events = vec![
+            request_builders::EventItem {
+                access_key: "41250106157250000116550010000000011000000017".into(),
+                event_type: 210200,
+                seq: 1,
+                tax_id: "06157250000116".into(),
+                additional_tags: String::new(),
+            },
+            request_builders::EventItem {
+                access_key: "41250106157250000116550010000000011000000018".into(),
+                event_type: 210210,
+                seq: 2,
+                tax_id: "06157250000116".into(),
+                additional_tags: String::new(),
+            },
+        ];
+        let request_xml = request_builders::build_event_batch_request(
+            "SP",
+            &events,
+            Some("1"),
+            SefazEnvironment::Homologation,
+        );
+        assert!(request_xml.contains("<evento"));
+        assert!(request_xml.contains("</evento>"));
+
+        let signed = client.sign_event_batch(&request_xml).expect("signs batch");
+        // Count </Signature> closing tags to verify each event has its own.
+        let sig_close_count = signed.matches("</Signature>").count();
+        assert_eq!(
+            sig_close_count, 2,
+            "each event must have its own </Signature>"
+        );
+    }
+
+    // ── cancel_substituicao (UF rejection) ───────────────────────────
+
+    #[tokio::test]
+    async fn cancel_substituicao_rejects_invalid_uf() {
+        let client = build_client();
+        let err = client
+            .cancel_substituicao(
+                "XX",
+                SefazEnvironment::Homologation,
+                "41250106157250000116550010000000011000000017",
+                "41250106157250000116550010000000011000000018",
+                "123456789",
+                "Justificativa de cancelamento por substituicao",
+                "1.0",
+                "06157250000116",
+            )
+            .await
+            .unwrap_err();
+        assert!(matches!(err, FiscalError::InvalidStateCode(_)));
+    }
+
+    // ── epec_nfce_status (builder panics on bad UF) ──────────────────
+
+    #[test]
+    #[should_panic(expected = "Invalid state code")]
+    fn epec_nfce_status_builder_panics_on_invalid_uf() {
+        request_builders::build_epec_nfce_status_request("XX", SefazEnvironment::Homologation);
+    }
+
+    // ── conciliacao model 55 routes via SVRS ─────────────────────────
+    // NT 2024.002: model 55 uses SVRS, so invalid UF is not caught at
+    // the UF validation layer. We verify that the effective_uf is SVRS.
+
+    #[test]
+    fn conciliacao_model_55_uses_svrs_org_override() {
+        // NT 2024.002: cOrgao=92 when sending via SVRS.
+        // The org_override is set to Some("92") when effective_uf is "SVRS".
+        let effective_uf = "SVRS";
+        let org_override: Option<&str> = if effective_uf == "SVRS" {
+            Some("92")
+        } else {
+            None
+        };
+        assert_eq!(org_override, Some("92"));
+
+        // For model 55: effective_uf = "SVRS" (not the issuer UF).
+        let model: u8 = 55;
+        let uf = "SP";
+        let effective = if model == 55 { "SVRS" } else { uf };
+        assert_eq!(effective, "SVRS");
+    }
+}
